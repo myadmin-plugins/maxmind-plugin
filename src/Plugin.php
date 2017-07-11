@@ -17,7 +17,7 @@ class Plugin {
 
 	public static function getHooks() {
 		return [
-			//'system.settings' => [__CLASS__, 'getSettings'],
+			'system.settings' => [__CLASS__, 'getSettings'],
 			//'ui.menu' => [__CLASS__, 'getMenu'],
 		];
 	}
@@ -41,8 +41,29 @@ class Plugin {
 
 	public static function getSettings(GenericEvent $event) {
 		$settings = $event->getSubject();
-		$settings->add_text_setting('General', 'MaxMind', 'abuse_imap_user', 'MaxMind IMAP User:', 'MaxMind IMAP Username', ABUSE_IMAP_USER);
-		$settings->add_text_setting('General', 'MaxMind', 'abuse_imap_pass', 'MaxMind IMAP Pass:', 'MaxMind IMAP Password', ABUSE_IMAP_PASS);
+		$settings->add_radio_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_enable', 'Enable MaxMind', 'Enable MaxMind', MAXMIND_ENABLE, [true, false], ['Enabled', 'Disabled']);
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_license_key', 'License Key', 'License Key', (defined('MAXMIND_LICENSE_KEY') ? MAXMIND_LICENSE_KEY : ''));
+		$settings->add_radio_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_carder_lock', 'Lock if Carder Email', 'Lock if Carder Email', MAXMIND_CARDER_LOCK, [true, false], ['Enabled', 'Disabled']);
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_score_lock', 'Lock if Score >= #', 'Lock if Score >= #', (defined('MAXMIND_SCORE_LOCK') ? MAXMIND_SCORE_LOCK : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_score_disable_cc', 'Disable CC if Score >= #', 'Disable CC if Score >= #', (defined('MAXMIND_SCORE_DISABLE_CC') ? MAXMIND_SCORE_DISABLE_CC : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_riskscore_lock', 'Lock if Risk % Score >= #', 'Lock if Risk % Score >= #', (defined('MAXMIND_RISKSCORE_LOCK') ? MAXMIND_RISKSCORE_LOCK : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_riskscore_disable_cc', 'Disable CC if Risk % Score >= #', 'Disable CC if Risk % Score >= #', (defined('MAXMIND_RISKSCORE_DISABLE_CC') ? MAXMIND_RISKSCORE_DISABLE_CC : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_proxyscore_disable_cc', 'Disable CC if Proxy Score >= #', 'Disable CC if Proxy Score >= #', (defined('MAXMIND_PROXYSCORE_DISABLE_CC') ? MAXMIND_PROXYSCORE_DISABLE_CC : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_possible_fraud_score', 'Email Possible Fraud Score >= #', 'Email Possible Fraud Score >= #', (defined('MAXMIND_POSSIBLE_FRAUD_SCORE') ? MAXMIND_POSSIBLE_FRAUD_SCORE : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_possible_fraud_riskscore', 'Email Possible Fraud Risk % Score >= #', 'Email Possible Fraud Risk % Score >= #', (defined('MAXMIND_POSSIBLE_FRAUD_RISKSCORE') ? MAXMIND_POSSIBLE_FRAUD_RISKSCORE : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_queries_remaining', 'Email when down to # Queries Remaining', 'Email when down to # Queries Remaining', (defined('MAXMIND_QUERIES_REMAINING') ? MAXMIND_QUERIES_REMAINING : ''));
+		$settings->add_radio_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_noresponse_disable_cc', 'Disable CC if No Response', 'Disable CC if No Response', MAXMIND_NORESPONSE_DISABLE_CC, [true, false], ['Enabled', 'Disabled']);
+		$settings->add_radio_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_reporting', 'Enable MaxMind Reporting', 'Enable MaxMind Reporting', MAXMIND_REPORTING, [true, false], ['Enabled', 'Disabled']);
+		$settings->add_radio_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_female_penalty_enable', 'Female Names Penalty ', 'Female Names Penalty ', MAXMIND_FEMALE_PENALTY_ENABLE, [true, false], ['Enabled', 'Disabled']);
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_female_score_penalty', 'Female Name Score Penalty Amount', 'Female Name Score Penalty Amount', (defined('MAXMIND_FEMALE_SCORE_PENALTY') ? MAXMIND_FEMALE_SCORE_PENALTY : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_female_score_limit', 'Female Name Score Penalty Cutoff Limit', 'Female Name Score Penalty Cutoff Limit', (defined('MAXMIND_FEMALE_SCORE_LIMIT') ? MAXMIND_FEMALE_SCORE_LIMIT : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_female_riskscore_penalty', 'Female Name Risk % Score Penalty Amount', 'Female Name Risk % Score Penalty Amount', (defined('MAXMIND_FEMALE_RISKSCORE_PENALTY') ? MAXMIND_FEMALE_RISKSCORE_PENALTY : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_female_riskscore_limit', 'Female Name Risk % Score Penalty Cutoff Limit', 'Female Name Risk % Score Penalty Cutoff Limit', (defined('MAXMIND_FEMALE_RISKSCORE_LIMIT') ? MAXMIND_FEMALE_RISKSCORE_LIMIT : ''));
+		$settings->add_radio_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_country_penalty_enable', 'Country Penalty ', 'Country Penalty ', MAXMIND_COUNTRY_PENALTY_ENABLE, [true, false], ['Enabled', 'Disabled']);
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_country_score_penalty', 'Country Score Penalty Amount', 'Country Score Penalty Amount', (defined('MAXMIND_COUNTRY_SCORE_PENALTY') ? MAXMIND_COUNTRY_SCORE_PENALTY : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_country_score_limit', 'Country Score Penalty Cutoff Limit', 'Country Score Penalty Cutoff Limit', (defined('MAXMIND_COUNTRY_SCORE_LIMIT') ? MAXMIND_COUNTRY_SCORE_LIMIT : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_country_riskscore_penalty', 'Country Risk % Score Penalty Amount', 'Country Risk % Score Penalty Amount', (defined('MAXMIND_COUNTRY_RISKSCORE_PENALTY') ? MAXMIND_COUNTRY_RISKSCORE_PENALTY : ''));
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_country_riskscore_limit', 'Country Risk % Score Penalty Cutoff Limit', 'Country Risk % Score Penalty Cutoff Limit', (defined('MAXMIND_COUNTRY_RISKSCORE_LIMIT') ? MAXMIND_COUNTRY_RISKSCORE_LIMIT : ''));
 	}
 
 }
