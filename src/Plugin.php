@@ -12,7 +12,7 @@ use Symfony\Component\EventDispatcher\GenericEvent;
 class Plugin {
 
 	public static $name = 'MaxMind Plugin';
-	public static $description = 'Allows handling of MaxMind emails and honeypots';
+	public static $description = 'Allows handling of MaxMind based Fraud Lookups and Fraud Reporting';
 	public static $help = '';
 	public static $type = 'plugin';
 
