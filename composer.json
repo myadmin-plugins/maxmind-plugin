@@ -1,5 +1,5 @@
 {
-    "name": "detain\/myadmin-maxmind-plugin",
+    "name": "detain/myadmin-maxmind-plugin",
     "type": "myadmin-plugin",
     "description": "MaxMind handling plugin for MyAdmin",
     "keywords": [
@@ -21,18 +21,18 @@
     "require": {
         "php": ">=5.0.0",
         "ext-curl": "*",
-        "symfony\/event-dispatcher": "*",
-        "detain\/myadmin-plugin-installer": "dev-master",
-        "maxmind\/minfraud": "~1.0",
-        "minfraud\/http": "^1.71",
-        "roave\/security-advisories": "dev-master"
+        "symfony/event-dispatcher": "*",
+        "detain/myadmin-plugin-installer": "dev-master",
+        "maxmind/minfraud": "~1.0",
+        "minfraud/http": "^1.71",
+        "roave/security-advisories": "dev-master"
     },
     "require-dev": {
-        "phpunit\/phpunit": "*",
-        "vlucas\/phpdotenv": "*",
-        "codeclimate\/php-test-reporter": "dev-master",
-        "satooshi\/php-coveralls": "*",
-        "codacy\/coverage": "dev-master"
+        "phpunit/phpunit": "*",
+        "vlucas/phpdotenv": "*",
+        "codeclimate/php-test-reporter": "dev-master",
+        "satooshi/php-coveralls": "*",
+        "codacy/coverage": "dev-master"
     },
     "autoload": {
         "psr-4": {
