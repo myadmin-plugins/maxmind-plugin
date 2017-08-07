@@ -272,7 +272,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		// Detect UTF8 encoding errors and attempt to automatically recover the data
 		if (json_last_error() === JSON_ERROR_UTF8) {
 			foreach ($response as $key => $value)
-				$response[$key] = Encoding::fixUTF8($value);
+				$response[$key] = \ForceUTF8\Encoding::fixUTF8($value);
 			$json = @json_encode($response);
 		}
 		$new_data = [];
