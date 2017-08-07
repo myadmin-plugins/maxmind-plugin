@@ -28,6 +28,7 @@
 		$module = get_module_name((isset($GLOBALS['tf']->variables->request['module']) ? $GLOBALS['tf']->variables->request['module'] : 'default'));
 		$GLOBALS['tf']->accounts->set_db_module($module);
 		$data = $GLOBALS['tf']->accounts->read($customer);
+		function_requirements('get_maxmind_field_descriptions');
 		$fields = get_maxmind_field_descriptions();
 		if (!isset($data['maxmind'])) {
 			$lid = $data['account_lid'];
