@@ -49,10 +49,12 @@ class Plugin {
 	 */
 	public static function getRequirements(GenericEvent $event) {
 		$loader = $event->getSubject();
-		$loader->add_requirement('class.MaxMind', '/../vendor/detain/myadmin-maxmind-plugin/src/MaxMind.php');
-		$loader->add_requirement('deactivate_kcare', '/../vendor/detain/myadmin-maxmind-plugin/src/abuse.inc.php');
-		$loader->add_requirement('deactivate_abuse', '/../vendor/detain/myadmin-maxmind-plugin/src/abuse.inc.php');
-		$loader->add_requirement('get_abuse_licenses', '/../vendor/detain/myadmin-maxmind-plugin/src/abuse.inc.php');
+		$loader->add_requirement('view_maxmind', '/../vendor/detain/myadmin-maxmind-plugin/src/view_maxmind.php');
+		$loader->add_requirement('maxmind_compare', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind_compare.php');
+		$loader->add_requirement('get_maxmind_field_descriptions', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind.inc.php');
+		$loader->add_requirement('maxmind_decode', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind.inc.php');
+		$loader->add_requirement('update_maxmind', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind.inc.php');
+		$loader->add_requirement('update_maxmind_noaccount', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind.inc.php');
 	}
 
 	/**
