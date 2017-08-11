@@ -23,8 +23,7 @@
  * 2.5 * proxyScore
  * Note this formula is capped at 10. maxEarthArc is defined as 20037 kilometers.
  *
- * Last Changed: $LastChangedDate: 2017-07-19 16:12:16 -0400 (Wed, 19 Jul 2017) $
- * @author detain
+ * @author Joe Huss <detain@interserver.net>
  * @copyright 2017
  * @package MyAdmin
  * @category General
