@@ -19,7 +19,7 @@ use MaxMind\MinFraud;
  * @param bool|string $ip ip address to register with the query, or false to have it use session ip
  * @return bool pretty much always returns true
  */
-function update_maxmind($customer, $ip = FALSE) {
+function update_maxmind_lookup($customer, $ip = FALSE) {
 	$mf = new MinFraud(MAXMIND_USER_ID, MAXMIND_LICENSE_KEY);
 	$data = $GLOBALS['tf']->accounts->read($customer);
 	$request = $mf->withDevice([
