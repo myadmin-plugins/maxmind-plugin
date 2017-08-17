@@ -150,7 +150,7 @@ function get_maxmind_field_descriptions() {
  */
 function update_maxmind($customer, $module = 'default', $ip = false) {
 	$customer = (int)$customer;
-	require_once __DIR__.'/../../vendor/minfraud/http/src/CreditCardFraudDetection.php';
+	require_once __DIR__.'/../../../minfraud/http/src/CreditCardFraudDetection.php';
 	//require_once ('include/accounts/maxmind/CreditCardFraudDetection.php');
 	//myadmin_log('accounts', 'info', "update_maxmind($customer, $module) Called", __LINE__, __FILE__);
 	$module = get_module_name($module);
@@ -330,7 +330,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
  * @return array the input $data but with the maxmind fields set
  */
 function update_maxmind_noaccount($data) {
-	require_once __DIR__.'/../../vendor/minfraud/http/src/CreditCardFraudDetection.php';
+	require_once __DIR__.'/../../../minfraud/http/src/CreditCardFraudDetection.php';
 	//require_once ('include/accounts/maxmind/CreditCardFraudDetection.php');
 	//myadmin_log('accounts', 'info', "update_maxmind_noaccount Called", __LINE__, __FILE__);
 	$good = true;
