@@ -28,6 +28,7 @@ class Plugin {
 	public static function getHooks() {
 		return [
 			'system.settings' => [__CLASS__, 'getSettings'],
+			'function.requirements' => [__CLASS__, 'getRequirements'],
 			//'ui.menu' => [__CLASS__, 'getMenu'],
 		];
 	}
@@ -54,6 +55,7 @@ class Plugin {
 		$loader->add_requirement('get_maxmind_field_descriptions', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind.inc.php');
 		$loader->add_requirement('maxmind_decode', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind.inc.php');
 		$loader->add_requirement('update_maxmind', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind.inc.php');
+		$loader->add_requirement('maxmind_lookup', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind_lookup.php');
 		$loader->add_requirement('update_maxmind_noaccount', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind.inc.php');
 	}
 
