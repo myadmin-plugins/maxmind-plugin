@@ -63,6 +63,7 @@ class Plugin {
 	public static function getSettings(GenericEvent $event) {
 		$settings = $event->getSubject();
 		$settings->add_radio_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_enable', 'Enable MaxMind', 'Enable MaxMind', MAXMIND_ENABLE, [TRUE, FALSE], ['Enabled', 'Disabled']);
+		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_user_id', 'User ID', 'User ID', (defined('MAXMIND_USER_ID') ? MAXMIND_USER_ID : ''));
 		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_license_key', 'License Key', 'License Key', (defined('MAXMIND_LICENSE_KEY') ? MAXMIND_LICENSE_KEY : ''));
 		$settings->add_radio_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_carder_lock', 'Lock if Carder Email', 'Lock if Carder Email', MAXMIND_CARDER_LOCK, [TRUE, FALSE], ['Enabled', 'Disabled']);
 		$settings->add_text_setting('Security & Fraud', 'MaxMind Fraud Detection', 'maxmind_score_lock', 'Lock if Score >= #', 'Lock if Score >= #', (defined('MAXMIND_SCORE_LOCK') ? MAXMIND_SCORE_LOCK : ''));
