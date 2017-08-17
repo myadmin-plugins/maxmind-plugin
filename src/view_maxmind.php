@@ -14,7 +14,7 @@
  * @throws \SmartyException
  */
 	function view_maxmind() {
-		require_once __DIR__.'/../../accounts/maxmind.inc.php'; // This handles fraud protection
+		require_once __DIR__.'/maxmind.inc.php'; // This handles fraud protection
 		page_title('MaxMind Credit Fraud Output');
 		function_requirements('has_acl');
 		if ($GLOBALS['tf']->ima != 'admin' || !has_acl('view_customer')) {
