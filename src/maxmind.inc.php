@@ -166,9 +166,8 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		return true;
 	}
 	$db->query("select * from access_log where access_owner={$customer} and access_login <= date_sub(now(), INTERVAL 1 YEAR) limit 1", __LINE__, __FILE__);
-	if ($db->num_rows() > 0) {
+	if ($db->num_rows() > 0)
 		return true;
-	}
 	$GLOBALS['tf']->history->set_db_module($module);
 	$good = true;
 	$fields = ['city', 'state', 'zip'];

@@ -111,12 +111,10 @@ function maxmind_lookup($customer, $ip = FALSE) {
 
 	print($insightsResponse->riskScore . "\n");
 	print($insightsResponse->creditCard->issuer->name . "\n");
-	foreach ($insightsResponse->warnings as $warning) {
+	foreach ($insightsResponse->warnings as $warning)
 		print($warning->warning . "\n");
-	}
 
 	print($scoreResponse->riskScore . "\n");
-	foreach ($scoreResponse->warnings as $warning) {
+	foreach ($scoreResponse->warnings as $warning)
 		print($warning->warning . "\n");
-	}
 }
