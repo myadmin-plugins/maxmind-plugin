@@ -222,7 +222,8 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		// $ccfs->debug = 1;
 		//next we pass the input hash to the server
 
-		myadmin_log('maxmind', 'debug', "update_maxmind({$customer}, {$module}) Calling Calling With Arguments: " . json_encode($request), __LINE__, __FILE__);
+		myadmin_log('maxmind', 'info', "update_maxmind({$customer}, {$module}) Called", __LINE__, __FILE__);
+		myadmin_log('maxmind', 'debug', json_encode($request), __LINE__, __FILE__);
 		$ccfs->input($request);
 		$ccfs->query();
 		$response = $ccfs->output();
