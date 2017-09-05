@@ -118,8 +118,7 @@ function get_maxmind_field_descriptions() {
 		'binPhoneMatch' => 'Whether customer service phone number matches inputed binPhone. A return value of Yes provides a positive indication that cardholder is in possession of credit card.',
 		'binPhone' => 'Customer service phone number listed on back of credit card*. Available for approximately 75% of BIN numbers. In some cases phone number returned may be outdated.',
 		'prepaid' => 'Whether the credit card is a prepaid or gift card.',
-		'custPhoneInBillingLoc' =>
-		'Whether the customer phone number is in the billing zip code. A return value of Yes provides a positive indication that the phone number listed belongs to the cardholder. A return value of No indicates that the phone number may be in a different area, or may not be listed in our database. NotFound is returned when the phone number prefix cannot be found in our database at all. Currently we only support US Phone numbers.',
+		'custPhoneInBillingLoc' => 'Whether the customer phone number is in the billing zip code. A return value of Yes provides a positive indication that the phone number listed belongs to the cardholder. A return value of No indicates that the phone number may be in a different area, or may not be listed in our database. NotFound is returned when the phone number prefix cannot be found in our database at all. Currently we only support US Phone numbers.',
 		'shipForward' => 'Whether shipping address is in database of known mail drops',
 		'cityPostalMatch' => 'Whether billing city and state match zipcode. Currently available for US addresses only, returns empty string outside the US. ',
 		'shipCityPostalMatch' => 'Whether shipping city and state match zipcode. Currently available for US addresses only, returns empty string outside the US. ',
@@ -130,7 +129,6 @@ function get_maxmind_field_descriptions() {
 		'maxmindID' => 'Unique identifier, used to reference transactions when reporting fraudulent activity back to MaxMind. This reporting will help MaxMind improve its service to you and will enable a planned feature to customize the fraud scoring formula based on your chargeback history.',
 		'minfraud_version' => 'Returns minFraud version (1.0 - 1.3) used ',
 		'service_level' => 'Returns service level used, can be:
-
 		standard (standard service)
 		premium (premium service)',
 		'err' => 'Returns an error string with a warning message or a reason why the request failed.'
@@ -152,7 +150,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 	$customer = (int)$customer;
 	require_once __DIR__.'/../../../minfraud/http/src/CreditCardFraudDetection.php';
 	//require_once ('include/accounts/maxmind/CreditCardFraudDetection.php');
-	//myadmin_log('accounts', 'info', "update_maxmind($customer, $module) Called", __LINE__, __FILE__);
+	//myadmin_log('maxmind', 'debug', "update_maxmind($customer, $module) Called", __LINE__, __FILE__);
 	$module = get_module_name($module);
 	$db = get_module_db($module);
 	$GLOBALS['tf']->accounts->set_db_module($module);
@@ -162,7 +160,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 	$md5_passwd = $db->Record['account_passwd'];
 	$md5_login = md5($data['account_lid']);
 	if (isset($data['cc_whitelist']) && $data['cc_whitelist'] == 1) {
-		myadmin_log('accounts', 'info', "update_maxmind($customer, $module) Customer is White Listed for CCs, Skipping Updating Maxmind", __LINE__, __FILE__);
+		myadmin_log('maxmind', 'notice', "update_maxmind($customer, $module) Customer is White Listed for CCs, Skipping Updating Maxmind", __LINE__, __FILE__);
 		return true;
 	}
 	$db->query("select * from access_log where access_owner={$customer} and access_login <= date_sub(now(), INTERVAL 1 YEAR) limit 1", __LINE__, __FILE__);
@@ -179,7 +177,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		$new_data['country'] = 'US';
 	}
 	if ($good === false) {
-		myadmin_log('accounts', 'info', "update_maxmind($customer, $module) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
+		myadmin_log('maxmind', 'notice', "update_maxmind($customer, $module) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
 		$new_data['disable_cc'] = 1;
 		$new_data['payment_method'] = 'paypal';
 	} else {
@@ -224,7 +222,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		// $ccfs->debug = 1;
 		//next we pass the input hash to the server
 
-		myadmin_log('accounts', 'info', "update_maxmind({$customer}, {$module}) Calling Calling With Arguments: " . json_encode($request), __LINE__, __FILE__);
+		myadmin_log('maxmind', 'debug', "update_maxmind({$customer}, {$module}) Calling Calling With Arguments: " . json_encode($request), __LINE__, __FILE__);
 		$ccfs->input($request);
 		$ccfs->query();
 		$response = $ccfs->output();
@@ -287,19 +285,20 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		if (isset($response['score']))
 			$new_data['maxmind_score'] = trim($response['score']);
 		$new_data['maxmind'] = $json;
-		myadmin_log('accounts', 'info', '	Maxmind '.(isset($response['score']) ? 'Score: '.$response['score'] : '').' riskScore: '.$response['riskScore'].' Output: '.$new_data['maxmind'], __LINE__, __FILE__);
+		myadmin_log('maxmind', 'notice', 'Maxmind '.(isset($response['score']) ? 'Score: '.$response['score'] : '').' riskScore: '.$response['riskScore'], __LINE__, __FILE__);
+		myadmin_log('maxmind', 'debug', $new_data['maxmind'], __LINE__, __FILE__);
 		if ((MAXMIND_CARDER_LOCK == true && $response['carderEmail'] == 'Yes') || (isset($response['score']) && $response['score'] >= MAXMIND_SCORE_LOCK) || $response['riskScore'] >= MAXMIND_RISKSCORE_LOCK) {
-			myadmin_log('accounts', 'warning', "update_maxmind({$customer}, {$module}) Carder Email Or High Score From Customer {$customer} (".(isset($response['score']) ? 'Score: '.$response['score'] : '')." RiskScore {$response['riskScore']}), Disabling Account", __LINE__, __FILE__);
+			myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) Carder Email Or High Score From Customer {$customer} (".(isset($response['score']) ? 'Score: '.$response['score'] : '')." RiskScore {$response['riskScore']}), Disabling Account", __LINE__, __FILE__);
 			function_requirements('disable_account');
 			disable_account($customer, $module);
 		}
 		if ((isset($response['score']) && $response['score'] >= MAXMIND_SCORE_DISABLE_CC) || $response['riskScore'] >= MAXMIND_RISKSCORE_DISABLE_CC || $response['proxyScore'] >= MAXMIND_PROXYSCORE_DISABLE_CC) {
-			myadmin_log('accounts', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? 'Score: '.$response['score']. ' >' . MAXMIND_SCORE_DISABLE_CC : ''). "   {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
+			myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? 'Score: '.$response['score']. ' >' . MAXMIND_SCORE_DISABLE_CC : ''). "   {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
 			$new_data['disable_cc'] = 1;
 			$new_data['payment_method'] = 'paypal';
 		}
 		if (MAXMIND_NORESPONSE_DISABLE_CC == true && (!isset($response['score']) || trim($response['score']) == '') && trim($response['riskScore']) == '') {
-			myadmin_log('accounts', 'warning', "update_maxmind({$customer}, {$module}) BLANK Maxmind Score and Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__);
+			myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) BLANK Maxmind Score and Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__);
 			$new_data['disable_cc'] = 1;
 			$new_data['payment_method'] = 'paypal';
 			$subject = TITLE.' MISSING MaxMind Data - Possible Fraud';
@@ -308,11 +307,11 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		if ((isset($response['score']) && $response['score'] > MAXMIND_POSSIBLE_FRAUD_SCORE) || $response['riskScore'] >= MAXMIND_POSSIBLE_FRAUD_SCORE) {
 			$subject = TITLE.' MaxMind Possible Fraud';
 			admin_mail($subject, $email, $headers, FALSE, 'admin_email_fraud.tpl');
-			myadmin_log('accounts', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? $response['score']. ' >' . MAXMIND_POSSIBLE_FRAUD_SCORE : ''). " or  {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.',   Emailing Possible Fraud', __LINE__, __FILE__);
+			myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? $response['score']. ' >' . MAXMIND_POSSIBLE_FRAUD_SCORE : ''). " or  {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.',   Emailing Possible Fraud', __LINE__, __FILE__);
 		}
 		if ($response['queriesRemaining'] <= MAXMIND_QUERIES_REMAINING) {
 			$subject = 'MaxMind Down To '.$response['queriesRemaining'].' Queries Remaining';
-			myadmin_log('accounts', 'warning', $subject, __LINE__, __FILE__);
+			myadmin_log('maxmind', 'warning', $subject, __LINE__, __FILE__);
 			admin_mail($subject, $subject, $headers, FALSE, 'admin_email_maxmind_queries.tpl');
 		}
 
@@ -331,7 +330,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 function update_maxmind_noaccount($data) {
 	require_once __DIR__.'/../../../minfraud/http/src/CreditCardFraudDetection.php';
 	//require_once ('include/accounts/maxmind/CreditCardFraudDetection.php');
-	//myadmin_log('accounts', 'info', "update_maxmind_noaccount Called", __LINE__, __FILE__);
+	//myadmin_log('maxmind', 'debug', "update_maxmind_noaccount Called", __LINE__, __FILE__);
 	$good = true;
 	$fields = ['city', 'state', 'zip'];
 	foreach ($fields as $field)
@@ -340,7 +339,7 @@ function update_maxmind_noaccount($data) {
 	if (!isset($data['country']) || trim($data['country']) == '')
 		$data['country'] = 'US';
 	if ($good === false) {
-		myadmin_log('accounts', 'info', "update_maxmind($customer, $module) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
+		myadmin_log('maxmind', 'notice', "update_maxmind($customer, $module) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
 		$data['disable_cc'] = 1;
 		$data['payment_method'] = 'paypal';
 	} else {
@@ -374,7 +373,7 @@ function update_maxmind_noaccount($data) {
 		//uncomment to turn on debugging
 		// $ccfs->debug = 1;
 		//next we pass the input hash to the server
-		myadmin_log('accounts', 'info', "update_maxmind({$customer}, {$module}) Calling With Arguments: " . json_encode($request), __LINE__, __FILE__);
+		myadmin_log('maxmind', 'debug', "update_maxmind({$customer}, {$module}) Calling With Arguments: " . json_encode($request), __LINE__, __FILE__);
 		$ccfs->input($request);
 		//then we query the server
 		$ccfs->query();
@@ -409,16 +408,17 @@ function update_maxmind_noaccount($data) {
 			if (isset($response['score']))
 				$data['maxmind_score'] = trim($response['score']);
 			$data['maxmind'] = myadmin_stringify($response);
-			myadmin_log('accounts', 'info', '	Maxmind Score: '.$response['score'].' riskScore: '.$response['riskScore'].' Output: '.json_encode($response), __LINE__, __FILE__);
+			myadmin_log('maxmind', 'notice', 'Maxmind '.(isset($response['score']) ? 'Score: '.$response['score'] : '').' riskScore: '.$response['riskScore'], __LINE__, __FILE__);
+			myadmin_log('maxmind', 'debug', $new_data['maxmind'], __LINE__, __FILE__);
 			if ((MAXMIND_CARDER_LOCK == true && $response['carderEmail'] == 'Yes') || (isset($response['score']) && $response['score'] >= MAXMIND_SCORE_LOCK) || $response['riskScore'] >= MAXMIND_RISKSCORE_LOCK)
 				$data['status'] = 'locked';
 			if ((isset($response['score']) && $response['score'] >= MAXMIND_SCORE_DISABLE_CC) || $response['riskScore'] >= MAXMIND_RISKSCORE_DISABLE_CC || $response['proxyScore'] >= MAXMIND_PROXYSCORE_DISABLE_CC) {
-				myadmin_log('accounts', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? "{$response['score']} >= " . MAXMIND_SCORE_DISABLE_CC : ''). " or  {$response['riskScore']} >= " . MAXMIND_RISKSCORE_DISABLE_CC.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
+				myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? "{$response['score']} >= " . MAXMIND_SCORE_DISABLE_CC : ''). " or  {$response['riskScore']} >= " . MAXMIND_RISKSCORE_DISABLE_CC.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
 				$data['disable_cc'] = 1;
 				$data['payment_method'] = 'paypal';
 			}
 			if (MAXMIND_NORESPONSE_DISABLE_CC == true && (!isset($response['score']) && trim($response['score']) == '') && trim($response['riskScore']) == '') {
-				myadmin_log('accounts', 'warning', "update_maxmind({$customer}, {$module}) BLANK Maxmind Score and BLANK MaxMind Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__);
+				myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) BLANK Maxmind Score and BLANK MaxMind Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__);
 				$data['disable_cc'] = 1;
 				$data['payment_method'] = 'paypal';
 			}
