@@ -277,7 +277,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		$smarty->assign('account_id', $customer);
 		$smarty->assign('account_lid', $GLOBALS['tf']->accounts->cross_reference($customer));
 		$smarty->assign('fraudArray', $response);
-		$email = $smarty->fetch('email/admin_email_fraud.tpl');
+		$email = $smarty->fetch('email/admin/fraud.tpl');
 		$headers = '';
 		$headers .= 'MIME-Version: 1.0'.EMAIL_NEWLINE;
 		$headers .= 'Content-type: text/html; charset=UTF-8'.EMAIL_NEWLINE;
@@ -303,11 +303,11 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 			$new_data['disable_cc'] = 1;
 			$new_data['payment_method'] = 'paypal';
 			$subject = TITLE.' MISSING MaxMind Data - Possible Fraud';
-			admin_mail($subject, $email, $headers, FALSE, 'admin_email_fraud.tpl');
+			admin_mail($subject, $email, $headers, FALSE, 'admin/fraud.tpl');
 		}
 		if ((isset($response['score']) && $response['score'] > MAXMIND_POSSIBLE_FRAUD_SCORE) || $response['riskScore'] >= MAXMIND_POSSIBLE_FRAUD_SCORE) {
 			$subject = TITLE.' MaxMind Possible Fraud';
-			admin_mail($subject, $email, $headers, FALSE, 'admin_email_fraud.tpl');
+			admin_mail($subject, $email, $headers, FALSE, 'admin/fraud.tpl');
 			myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? $response['score']. ' >' . MAXMIND_POSSIBLE_FRAUD_SCORE : ''). " or  {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.',   Emailing Possible Fraud', __LINE__, __FILE__);
 		}
 		if ($response['queriesRemaining'] <= MAXMIND_QUERIES_REMAINING) {
