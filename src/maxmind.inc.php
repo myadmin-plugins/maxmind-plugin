@@ -248,7 +248,8 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 					}
 					$response['original_riskScore'] = $response['riskScore'];
 					$response['riskScore'] += MAXMIND_FEMALE_RISKSCORE_PENALTY;
-					$response['explanation'] = trim($response['explanation']).' The user has a female first name, as per request, that means + '.MAXMIND_FEMALE_SCORE_PENALTY.' to fraud score';
+					if (isset($response['explanation']))
+						$response['explanation'] = trim($response['explanation']).' The user has a female first name, as per request, that means + '.MAXMIND_FEMALE_SCORE_PENALTY.' to fraud score';
 				}
 			} else
 				$response['female_name'] = 'no';
@@ -399,7 +400,8 @@ function update_maxmind_noaccount($data) {
 						}
 						$response['original_riskScore'] = $response['riskScore'];
 						$response['riskScore'] += MAXMIND_FEMALE_RISKSCORE_PENALTY;
-						$response['explanation'] = trim($response['explanation']).' The user has a female first name, as per request, that means + '.MAXMIND_FEMALE_SCORE_PENALTY.' to fraud score';
+						if (isset($response['explanation']))
+							$response['explanation'] = trim($response['explanation']).' The user has a female first name, as per request, that means + '.MAXMIND_FEMALE_SCORE_PENALTY.' to fraud score';
 					}
 				} else
 					$response['female_name'] = 'no';
