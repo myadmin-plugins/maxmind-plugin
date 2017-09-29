@@ -15,16 +15,15 @@
         }
     ],
     "config": {
-        "bin-dir": "vendor\/bin",
-        "minimum-stability": "dev"
+        "bin-dir": "vendor\/bin"
     },
     "require": {
         "php": ">=5.0.0",
         "ext-curl": "*",
         "symfony/event-dispatcher": "*",
         "detain/myadmin-plugin-installer": "dev-master",
-        "maxmind/minfraud": "*",
-        "minfraud/http": "dev-master",
+        "maxmind/minfraud": "dev-master@dev",
+        "minfraud/http": "dev-master@dev",
         "roave/security-advisories": "dev-master"
     },
     "require-dev": {
