@@ -70,7 +70,7 @@ function maxmind_lookup($customer, $ip = FALSE) {
 		'is_gift'          => false,						// boolean      Whether order was marked as a gift by the purchaser.
 		'has_gift_message' => false,						// boolean      Whether the purchaser included a gift message.
 		'affiliate_id'     => 'af12',						// string (255) The ID of the affiliate where the order is coming from.
-		'subaffiliate_id'  => 'saf42',						// string (255) The ID of the sub-affiliate where the order is coming from.
+		//'subaffiliate_id'  => 'saf42',						// string (255) The ID of the sub-affiliate where the order is coming from.
 		'referrer_uri'     => 'http://www.amazon.com/'		// string (1024)        The URI of the referring site for this order. Needs to be absolute and have a URI scheme such as https://
 	])->withShoppingCartItem([
 		'category' => 'pets',			// string (255) The category of the item.
