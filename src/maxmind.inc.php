@@ -185,7 +185,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		$request['license_key'] = MAXMIND_LICENSE_KEY;
 		// Required fields
 		if ($ip === false)
-			$request['i'] = $GLOBALS['tf']->session->getuser_ip();
+			$request['i'] = \MyAdmin\Session::get_client_ip();
 		else
 			$request['i'] = $ip;
 		if (isset($data['city']))
@@ -347,7 +347,7 @@ function update_maxmind_noaccount($data) {
 	} else {
 		$ccfs = new CreditCardFraudDetection;
 		$request['license_key'] = MAXMIND_LICENSE_KEY;
-		$request['i'] = $GLOBALS['tf']->session->getuser_ip();
+		$request['i'] = \MyAdmin\Session::get_client_ip();
 		$request['city'] = $data['city']; // set the billing city
 		$request['region'] = $data['state']; // set the billing state
 		$request['postal'] = $data['zip']; // set the billing zip code
