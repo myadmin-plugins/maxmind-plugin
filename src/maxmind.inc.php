@@ -314,7 +314,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		if ($response['queriesRemaining'] <= MAXMIND_QUERIES_REMAINING) {
 			$subject = 'MaxMind Down To '.$response['queriesRemaining'].' Queries Remaining';
 			myadmin_log('maxmind', 'warning', $subject, __LINE__, __FILE__);
-			admin_mail($subject, $subject, $headers, FALSE, 'admin_email_maxmind_queries.tpl');
+			admin_mail($subject, $subject, $headers, FALSE, 'admin/maxmind_queries.tpl');
 		}
 
 	}
