@@ -149,8 +149,6 @@ function get_maxmind_field_descriptions() {
 function update_maxmind($customer, $module = 'default', $ip = false) {
 	$customer = (int)$customer;
 	require_once __DIR__.'/../../../minfraud/http/src/CreditCardFraudDetection.php';
-	//require_once ('include/accounts/maxmind/CreditCardFraudDetection.php');
-	//myadmin_log('maxmind', 'debug', "update_maxmind($customer, $module) Called", __LINE__, __FILE__);
 	$module = get_module_name($module);
 	$db = get_module_db($module);
 	$GLOBALS['tf']->accounts->set_db_module($module);
@@ -160,7 +158,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 	$md5_passwd = $db->Record['account_passwd'];
 	$md5_login = md5($data['account_lid']);
 	if (isset($data['cc_whitelist']) && $data['cc_whitelist'] == 1) {
-		myadmin_log('maxmind', 'notice', "update_maxmind($customer, $module) Customer is White Listed for CCs, Skipping Updating Maxmind", __LINE__, __FILE__);
+		myadmin_log('maxmind', 'notice', "update_maxmind({$customer}, {$module}) Customer is White Listed for CCs, Skipping Updating Maxmind", __LINE__, __FILE__);
 		return true;
 	}
 	$db->query("select * from access_log where access_owner={$customer} and access_login <= date_sub(now(), INTERVAL 1 YEAR) limit 1", __LINE__, __FILE__);
@@ -177,7 +175,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		$new_data['country'] = 'US';
 	}
 	if ($good === false) {
-		myadmin_log('maxmind', 'notice', "update_maxmind($customer, $module) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
+		myadmin_log('maxmind', 'notice', "update_maxmind({$customer}, {$module}) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
 		$new_data['disable_cc'] = 1;
 		$new_data['payment_method'] = 'paypal';
 	} else {
