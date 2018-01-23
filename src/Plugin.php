@@ -29,7 +29,7 @@ class Plugin {
 		return [
 			'system.settings' => [__CLASS__, 'getSettings'],
 			'function.requirements' => [__CLASS__, 'getRequirements'],
-			//'ui.menu' => [__CLASS__, 'getMenu'],
+			'ui.menu' => [__CLASS__, 'getMenu'],
 		];
 	}
 
@@ -40,8 +40,8 @@ class Plugin {
 		$menu = $event->getSubject();
 		if ($GLOBALS['tf']->ima == 'admin') {
 			function_requirements('has_acl');
-					if (has_acl('client_billing'))
-							$menu->add_link('admin', 'choice=none.abuse_admin', '/bower_components/webhostinghub-glyphs-icons/icons/development-16/Black/icon-spam.png', 'MaxMind');
+			if (has_acl('client_billing'))
+				$menu->add_link('billing', 'choice=none.maxmind_compare', '/images/myadmin/exchange.png', 'MaxMind Compare score/riskScore');
 		}
 	}
 
