@@ -205,8 +205,6 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		if (isset($data['phone']))
 			$request['custPhone'] = $data['phone']; // Area-code and local prefix of customer phone number
 		// Optional fields
-		//$request['binName'] = $bankname;  // bank name
-		//$request['binPhone'] = "800-421-2110";  // bank customer service phone number on back of credit card
 		$request['requested_type'] = 'premium'; // Which level (free, city, premium) of CCFD to use
 		$request['emailMD5'] = $md5_login; // CreditCardFraudDetection.php will take
 		// MD5 hash of e-mail address passed to emailMD5 if it detects '@' in the string
@@ -364,8 +362,6 @@ function update_maxmind_noaccount($data) {
 			$request['forwardedIP'] = $ip; // X-Forwarded-For or Client-IP HTTP Header
 		$request['custPhone'] = $data['phone']; // Area-code and local prefix of customer phone number
 		// Optional fields
-		//$request['binName'] = $bankname;  // bank name
-		//$request['binPhone'] = "800-421-2110";  // bank customer service phone number on back of credit card
 		$request['requested_type'] = 'premium'; // Which level (free, city, premium) of CCFD to use
 		$request['emailMD5'] = md5($data['lid']); // CreditCardFraudDetection.php will take
 		// MD5 hash of e-mail address passed to emailMD5 if it detects '@' in the string
