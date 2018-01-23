@@ -188,13 +188,13 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 			$request['i'] = \MyAdmin\Session::get_client_ip();
 		else
 			$request['i'] = $ip;
-		if (isset($data['city']))
+		if (isset($data['city']) && trim($data['city']) != '')
 			$request['city'] = $data['city']; // set the billing city
-		if (isset($data['state']))
+		if (isset($data['state']) && trim($data['state']) != '')
 			$request['region'] = $data['state']; // set the billing state
-		if (isset($data['zip']))
+		if (isset($data['zip']) && trim($data['zip']) != '')
 			$request['postal'] = $data['zip']; // set the billing zip code
-		if (isset($data['country']))
+		if (isset($data['country']) && trim($data['country']) != '')
 			$request['country'] = $data['country']; // set the billing country
 		// Recommended fields
 		$request['domain'] = mb_substr($data['account_lid'], mb_strpos($data['account_lid'], '@') + 1);
@@ -348,10 +348,14 @@ function update_maxmind_noaccount($data) {
 		$ccfs = new CreditCardFraudDetection;
 		$request['license_key'] = MAXMIND_LICENSE_KEY;
 		$request['i'] = \MyAdmin\Session::get_client_ip();
-		$request['city'] = $data['city']; // set the billing city
-		$request['region'] = $data['state']; // set the billing state
-		$request['postal'] = $data['zip']; // set the billing zip code
-		$request['country'] = $data['country']; // set the billing country
+		if (isset($data['city']) && trim($data['city']) != '')
+			$request['city'] = $data['city']; // set the billing city
+		if (isset($data['state']) && trim($data['state']) != '')
+			$request['region'] = $data['state']; // set the billing state
+		if (isset($data['zip']) && trim($data['zip']) != '')
+			$request['postal'] = $data['zip']; // set the billing zip code
+		if (isset($data['country']) && trim($data['country']) != '')
+			$request['country'] = $data['country']; // set the billing country
 		// Recommended fields
 		$request['domain'] = mb_substr($data['lid'], mb_strpos($data['lid'], '@') + 1);
 		if (isset($data['cc']) && $GLOBALS['tf']->decrypt($data['cc']) != '')
