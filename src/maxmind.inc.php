@@ -251,6 +251,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 				$response['female_name'] = 'no';
 		} else
 			$response['female_name'] = 'no';
+		/*
 		$db->query("select * from invoices where invoices_paid=1 and invoices_custid={$customer}");
 		if ($db->num_rows() > 2) {
 			if (isset($response['score']))
@@ -262,6 +263,7 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 			if ($response['riskScore'] <= 0)
 				$response['riskScore'] = 0;
 		}
+		*/
 		$json = @json_encode($response);
 		// Detect UTF8 encoding errors and attempt to automatically recover the data
 		if (json_last_error() === JSON_ERROR_UTF8) {
@@ -286,9 +288,14 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		myadmin_log('maxmind', 'notice', 'Maxmind '.(isset($response['score']) ? 'Score: '.$response['score'] : '').' riskScore: '.$response['riskScore'], __LINE__, __FILE__);
 		myadmin_log('maxmind', 'debug', $new_data['maxmind'], __LINE__, __FILE__);
 		if ((MAXMIND_CARDER_LOCK == true && $response['carderEmail'] == 'Yes') || (isset($response['score']) && $response['score'] >= MAXMIND_SCORE_LOCK) || $response['riskScore'] >= MAXMIND_RISKSCORE_LOCK) {
-			myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) Carder Email Or High Score From Customer {$customer} (".(isset($response['score']) ? 'Score: '.$response['score'] : '')." RiskScore {$response['riskScore']}), Disabling Account", __LINE__, __FILE__);
-			function_requirements('disable_account');
-			disable_account($customer, $module);
+			$db->query("select * from invoices where invoices_paid=1 and invoices_custid={$customer} and invoices_date <= date_sub(now(), INTERVAL 1 DAY) limit 1", __LINE__, __FILE__);
+			if ($db->num_rows() == 0) {
+				myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) Carder Email Or High Score From Customer {$customer} (".(isset($response['score']) ? 'Score: '.$response['score'] : '')." RiskScore {$response['riskScore']}), I would disable the account but they have old invoices", __LINE__, __FILE__);
+			} else {
+				myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) Carder Email Or High Score From Customer {$customer} (".(isset($response['score']) ? 'Score: '.$response['score'] : '')." RiskScore {$response['riskScore']}), Disabling Account", __LINE__, __FILE__);
+				function_requirements('disable_account');
+				disable_account($customer, $module);
+			}
 		}
 		if ((isset($response['score']) && $response['score'] >= MAXMIND_SCORE_DISABLE_CC) || $response['riskScore'] >= MAXMIND_RISKSCORE_DISABLE_CC || $response['proxyScore'] >= MAXMIND_PROXYSCORE_DISABLE_CC) {
 			myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? 'Score: '.$response['score']. ' >' . MAXMIND_SCORE_DISABLE_CC : ''). "   {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
