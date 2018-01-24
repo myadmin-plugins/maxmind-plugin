@@ -264,6 +264,11 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 				$response['riskScore'] = 0;
 		}
 		*/
+
+		$distance_penalty = floor($response['distance'] / 1000);
+		myadmin_log('maxmind', 'info', 'Distance is '.$response['distance'].' or +'.$distance_penalty.' to Score', __LINE__, __FILE__);
+		$response['riskScore'] += $distance_penalty;
+
 		$json = @json_encode($response);
 		// Detect UTF8 encoding errors and attempt to automatically recover the data
 		if (json_last_error() === JSON_ERROR_UTF8) {
@@ -412,6 +417,11 @@ function update_maxmind_noaccount($data) {
 					$response['female_name'] = 'no';
 			} else
 				$response['female_name'] = 'no';
+
+			$distance_penalty = floor($response['distance'] / 1000);
+			myadmin_log('maxmind', 'info', 'Distance is '.$response['distance'].' or +'.$distance_penalty.' to Score', __LINE__, __FILE__);
+			$response['riskScore'] += $distance_penalty;
+
 			$data['maxmind_riskscore'] = trim($response['riskScore']);
 			if (isset($response['score']))
 				$data['maxmind_score'] = trim($response['score']);
