@@ -265,8 +265,8 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		}
 		*/
 
-		$distance_penalty = floor($response['distance'] / 1000);
-		myadmin_log('maxmind', 'info', 'Distance is '.$response['distance'].' or +'.$distance_penalty.' to Score', __LINE__, __FILE__);
+		$distance_penalty = floor($response['distance'] / 100);
+		myadmin_log('maxmind', 'info', 'Distance is '.$response['distance'].' or +'.$distance_penalty.' to riskScore (previously '.$response['riskScore'].')', __LINE__, __FILE__);
 		$response['riskScore'] += $distance_penalty;
 
 		$json = @json_encode($response);
