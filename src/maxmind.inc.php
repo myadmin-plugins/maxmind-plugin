@@ -284,9 +284,9 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		$smarty->assign('fraudArray', $response);
 		$email = $smarty->fetch('email/admin/fraud.tpl');
 		$headers = '';
-		$headers .= 'MIME-Version: 1.0'.EMAIL_NEWLINE;
-		$headers .= 'Content-type: text/html; charset=UTF-8'.EMAIL_NEWLINE;
-		$headers .= 'From: '.TITLE.' <'.EMAIL_FROM.'>'.EMAIL_NEWLINE;
+		$headers .= 'MIME-Version: 1.0'.PHP_EOL;
+		$headers .= 'Content-type: text/html; charset=UTF-8'.PHP_EOL;
+		$headers .= 'From: '.TITLE.' <'.EMAIL_FROM.'>'.PHP_EOL;
 		$new_data['maxmind_riskscore'] = trim($response['riskScore']);
 		if (isset($response['score']))
 			$new_data['maxmind_score'] = trim($response['score']);
