@@ -19,11 +19,12 @@ use MaxMind\MinFraud;
  * @param bool|string $ip ip address to register with the query, or false to have it use session ip
  * @return bool pretty much always returns true
  */
-function maxmind_lookup($customer, $ip = FALSE) {
+function maxmind_lookup($customer, $ip = false)
+{
 	$mf = new MinFraud(MAXMIND_USER_ID, MAXMIND_LICENSE_KEY);
 	$data = $GLOBALS['tf']->accounts->read($customer);
 	$request = $mf->withDevice([
-		'ip_address'      => $ip == FALSE ? \MyAdmin\Session::get_client_ip() : $ip,	// string The IP address associated with the device used by the customer in the transaction. The IP address must be in IPv4 or IPv6 presentation format, i.e., dotted-quad notation or the IPv6 hexadecimal-colon notation. (Required)
+		'ip_address'      => $ip == false ? \MyAdmin\Session::get_client_ip() : $ip,	// string The IP address associated with the device used by the customer in the transaction. The IP address must be in IPv4 or IPv6 presentation format, i.e., dotted-quad notation or the IPv6 hexadecimal-colon notation. (Required)
 		'session_age'     => time() - $GLOBALS['tf']->session->loggedInAt,					// string (255) The number of seconds between the creation of the user’s session and the time of the transaction. Note that session_age is not the duration of the current visit, but the time since the start of the first visit.
 		'session_id'      => $GLOBALS['tf']->session->sessionid,							// string (255) An ID that uniquely identifies a visitor’s session on the site.
 		'user_agent'      => $_SERVER['HTTP_USER_AGENT'],									// decimal	The HTTP “User-Agent” header of the browser used in the transaction.
@@ -93,17 +94,17 @@ function maxmind_lookup($customer, $ip = FALSE) {
 		$factorsResponse = $request->factors();
 		$insightsResponse = $request->insights();
 		$scoreResponse = $request->score();
-	} catch(\MaxMind\Exception\InvalidInputException $r) {
+	} catch (\MaxMind\Exception\InvalidInputException $r) {
 		$msg = 'Invalid input data or when ->score() or ->insights() is called on a request where the required ip_address field in the device array is missing.';
-	} catch(\MaxMind\Exception\AuthenticationException $r) {
+	} catch (\MaxMind\Exception\AuthenticationException $r) {
 		$msg = 'the server is unable to authenticate the request, e.g., if the license key or user ID is invalid.';
-	} catch(\MaxMind\Exception\InsufficientFundsException $r) {
+	} catch (\MaxMind\Exception\InsufficientFundsException $r) {
 		$msg = 'your account is out of funds.';
-	} catch(\MaxMind\Exception\InvalidRequestException $r) {
+	} catch (\MaxMind\Exception\InvalidRequestException $r) {
 		$msg = 'server rejects the request for another reason such as invalid JSON in the POST.';
-	} catch(\MaxMind\Exception\HttpException $r) {
+	} catch (\MaxMind\Exception\HttpException $r) {
 		$msg = 'unexpected HTTP error occurs such as a firewall interfering with the request to the server.';
-	} catch(\MaxMind\Exception\WebServiceException $r) {
+	} catch (\MaxMind\Exception\WebServiceException $r) {
 		$msg = 'An Undetermined Error Occurred';
 	}
 
@@ -111,10 +112,12 @@ function maxmind_lookup($customer, $ip = FALSE) {
 
 	print($insightsResponse->riskScore . "\n");
 	print($insightsResponse->creditCard->issuer->name . "\n");
-	foreach ($insightsResponse->warnings as $warning)
+	foreach ($insightsResponse->warnings as $warning) {
 		print($warning->warning . "\n");
+	}
 
 	print($scoreResponse->riskScore . "\n");
-	foreach ($scoreResponse->warnings as $warning)
+	foreach ($scoreResponse->warnings as $warning) {
 		print($warning->warning . "\n");
+	}
 }

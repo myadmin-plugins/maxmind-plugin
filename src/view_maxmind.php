@@ -13,7 +13,8 @@
  * @throws \Exception
  * @throws \SmartyException
  */
-	function view_maxmind() {
+	function view_maxmind()
+	{
 		require_once __DIR__.'/maxmind.inc.php'; // This handles fraud protection
 		page_title('MaxMind Credit Fraud Output');
 		function_requirements('has_acl');
@@ -39,8 +40,9 @@
 		$table = new TFTable;
 		$table->set_title('Maxmind Output');
 		$maxmind = myadmin_unstringify($data['maxmind']);
-		if (!is_array($maxmind))
+		if (!is_array($maxmind)) {
 			$maxmind = myadmin_unstringify(stripslashes($data['maxmind']));
+		}
 		$GLOBALS['tf']->add_html_head_js('
 <style type="text/css">
 .isotope h4 {

@@ -37,14 +37,16 @@ use \ForceUTF8\Encoding;
  * @param string $encoded_maxmind encoded maxmind string
  * @return array|false the decoded maxmind data in an associative array, or false if there was a problem
  */
-function maxmind_decode($encoded_maxmind) {
+function maxmind_decode($encoded_maxmind)
+{
 	return myadmin_unstringify($encoded_maxmind);
 }
 
 /**
  * This handles fraud protection
  */
-function get_maxmind_field_descriptions() {
+function get_maxmind_field_descriptions()
+{
 	$fields = [
 		'distance' => 'Distance from IP address location to billing location in kilometers (large distance = higher risk).',
 		'countryMatch' => 'Whether country of IP address matches billing address country (mismatch = higher risk).',
@@ -146,7 +148,8 @@ function get_maxmind_field_descriptions() {
  * @return bool pretty much always returns true
  * @throws \Exception
  */
-function update_maxmind($customer, $module = 'default', $ip = false) {
+function update_maxmind($customer, $module = 'default', $ip = false)
+{
 	$customer = (int)$customer;
 	require_once __DIR__.'/../../../minfraud/http/src/CreditCardFraudDetection.php';
 	$module = get_module_name($module);
@@ -162,14 +165,17 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		return true;
 	}
 	$db->query("select * from access_log where access_owner={$customer} and access_login <= date_sub(now(), INTERVAL 1 YEAR) limit 1", __LINE__, __FILE__);
-	if ($db->num_rows() > 0)
+	if ($db->num_rows() > 0) {
 		return true;
+	}
 	$GLOBALS['tf']->history->set_db_module($module);
 	$good = true;
 	$fields = ['city', 'state', 'zip'];
-	foreach ($fields as $field)
-		if (!isset($data[$field]) || trim($data[$field]) == '')
+	foreach ($fields as $field) {
+		if (!isset($data[$field]) || trim($data[$field]) == '') {
 			$good = false;
+		}
+	}
 	if (!isset($data['country']) || trim($data['country']) == '') {
 		$data['country'] = 'US';
 		$new_data['country'] = 'US';
@@ -182,26 +188,34 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		$ccfs = new CreditCardFraudDetection;
 		$request['license_key'] = MAXMIND_LICENSE_KEY;
 		// Required fields
-		if ($ip === false)
+		if ($ip === false) {
 			$request['i'] = \MyAdmin\Session::get_client_ip();
-		else
+		} else {
 			$request['i'] = $ip;
-		if (isset($data['city']) && trim($data['city']) != '')
-			$request['city'] = $data['city']; // set the billing city
-		if (isset($data['state']) && trim($data['state']) != '')
-			$request['region'] = $data['state']; // set the billing state
-		if (isset($data['zip']) && trim($data['zip']) != '')
-			$request['postal'] = $data['zip']; // set the billing zip code
-		if (isset($data['country']) && trim($data['country']) != '')
-			$request['country'] = $data['country']; // set the billing country
+		}
+		if (isset($data['city']) && trim($data['city']) != '') {
+			$request['city'] = $data['city'];
+		} // set the billing city
+		if (isset($data['state']) && trim($data['state']) != '') {
+			$request['region'] = $data['state'];
+		} // set the billing state
+		if (isset($data['zip']) && trim($data['zip']) != '') {
+			$request['postal'] = $data['zip'];
+		} // set the billing zip code
+		if (isset($data['country']) && trim($data['country']) != '') {
+			$request['country'] = $data['country'];
+		} // set the billing country
 		// Recommended fields
 		$request['domain'] = mb_substr($data['account_lid'], mb_strpos($data['account_lid'], '@') + 1);
-		if (isset($data['cc']) && $GLOBALS['tf']->decrypt($data['cc']) != '')
-			$request['bin'] = mb_substr($GLOBALS['tf']->decrypt($data['cc']), 0, 6); // bank identification number
-		if ($ip !== false)
-			$request['forwardedIP'] = $ip; // X-Forwarded-For or Client-IP HTTP Header
-		if (isset($data['phone']))
-			$request['custPhone'] = $data['phone']; // Area-code and local prefix of customer phone number
+		if (isset($data['cc']) && $GLOBALS['tf']->decrypt($data['cc']) != '') {
+			$request['bin'] = mb_substr($GLOBALS['tf']->decrypt($data['cc']), 0, 6);
+		} // bank identification number
+		if ($ip !== false) {
+			$request['forwardedIP'] = $ip;
+		} // X-Forwarded-For or Client-IP HTTP Header
+		if (isset($data['phone'])) {
+			$request['custPhone'] = $data['phone'];
+		} // Area-code and local prefix of customer phone number
 		// Optional fields
 		$request['requested_type'] = 'premium'; // Which level (free, city, premium) of CCFD to use
 		$request['emailMD5'] = $md5_login; // CreditCardFraudDetection.php will take
@@ -224,10 +238,12 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		$ccfs->query();
 		$response = $ccfs->output();
 		if (isset($data['country']) && in_array(strtolower($data['country']), ['br', 'tw'])) {
-			if (isset($response['score']) && $response['score'] < MAXMIND_COUNTRY_SCORE_LIMIT)
+			if (isset($response['score']) && $response['score'] < MAXMIND_COUNTRY_SCORE_LIMIT) {
 				$response['score'] += MAXMIND_COUNTRY_SCORE_PENALTY;
-			if (isset($response['riskScore']) && $response['riskScore'] <= MAXMIND_COUNTRY_RISKSCORE_LIMIT)
+			}
+			if (isset($response['riskScore']) && $response['riskScore'] <= MAXMIND_COUNTRY_RISKSCORE_LIMIT) {
 				$response['riskScore'] += MAXMIND_COUNTRY_SCORE_PENALTY;
+			}
 		}
 		if (isset($data['name'])) {
 			$nparts = explode(' ', $data['name']);
@@ -235,8 +251,9 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 			include_once __DIR__.'/../../../../include/config/female_names.inc.php';
 			if (in_array($first_name, $female_names)) {
 				$response['female_name'] = 'yes';
-				if (isset($response['score']))
+				if (isset($response['score'])) {
 					$response['score'] = trim($response['score']);
+				}
 				if (MAXMIND_FEMALE_PENALTY_ENABLE == true && ((isset($response['score']) && $response['score'] < MAXMIND_FEMALE_SCORE_LIMIT) || $response['riskScore'] < MAXMIND_FEMALE_RISKSCORE_LIMIT)) {
 					if (isset($response['score'])) {
 						$response['original_score'] = $response['score'];
@@ -244,13 +261,16 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 					}
 					$response['original_riskScore'] = $response['riskScore'];
 					$response['riskScore'] += MAXMIND_FEMALE_RISKSCORE_PENALTY;
-					if (isset($response['explanation']))
+					if (isset($response['explanation'])) {
 						$response['explanation'] = trim($response['explanation']).' The user has a female first name, as per request, that means + '.MAXMIND_FEMALE_SCORE_PENALTY.' to fraud score';
+					}
 				}
-			} else
+			} else {
 				$response['female_name'] = 'no';
-		} else
+			}
+		} else {
 			$response['female_name'] = 'no';
+		}
 		/*
 		$db->query("select * from invoices where invoices_paid=1 and invoices_custid={$customer}");
 		if ($db->num_rows() > 2) {
@@ -273,8 +293,9 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		$json = @json_encode($response);
 		// Detect UTF8 encoding errors and attempt to automatically recover the data
 		if (json_last_error() === JSON_ERROR_UTF8) {
-			foreach ($response as $key => $value)
+			foreach ($response as $key => $value) {
 				$response[$key] = \ForceUTF8\Encoding::fixUTF8($value);
+			}
 			$json = @json_encode($response);
 		}
 		$new_data = [];
@@ -288,8 +309,9 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 		$headers .= 'Content-type: text/html; charset=UTF-8'.PHP_EOL;
 		$headers .= 'From: '.TITLE.' <'.EMAIL_FROM.'>'.PHP_EOL;
 		$new_data['maxmind_riskscore'] = trim($response['riskScore']);
-		if (isset($response['score']))
+		if (isset($response['score'])) {
 			$new_data['maxmind_score'] = trim($response['score']);
+		}
 		$new_data['maxmind'] = $json;
 		myadmin_log('maxmind', 'notice', 'Maxmind '.(isset($response['score']) ? 'Score: '.$response['score'] : '').' riskScore: '.$response['riskScore'], __LINE__, __FILE__);
 		myadmin_log('maxmind', 'debug', $new_data['maxmind'], __LINE__, __FILE__);
@@ -313,19 +335,18 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
 			$new_data['disable_cc'] = 1;
 			$new_data['payment_method'] = 'paypal';
 			$subject = TITLE.' MISSING MaxMind Data - Possible Fraud';
-			admin_mail($subject, $email, $headers, FALSE, 'admin/fraud.tpl');
+			admin_mail($subject, $email, $headers, false, 'admin/fraud.tpl');
 		}
 		if ((isset($response['score']) && $response['score'] > MAXMIND_POSSIBLE_FRAUD_SCORE) || $response['riskScore'] >= MAXMIND_POSSIBLE_FRAUD_SCORE) {
 			$subject = TITLE.' MaxMind Possible Fraud';
-			admin_mail($subject, $email, $headers, FALSE, 'admin/fraud.tpl');
+			admin_mail($subject, $email, $headers, false, 'admin/fraud.tpl');
 			myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? $response['score']. ' >' . MAXMIND_POSSIBLE_FRAUD_SCORE : ''). " or  {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.',   Emailing Possible Fraud', __LINE__, __FILE__);
 		}
 		if ($response['queriesRemaining'] <= MAXMIND_QUERIES_REMAINING) {
 			$subject = 'MaxMind Down To '.$response['queriesRemaining'].' Queries Remaining';
 			myadmin_log('maxmind', 'warning', $subject, __LINE__, __FILE__);
-			admin_mail($subject, $subject, $headers, FALSE, 'admin/maxmind_queries.tpl');
+			admin_mail($subject, $subject, $headers, false, 'admin/maxmind_queries.tpl');
 		}
-
 	}
 	$GLOBALS['tf']->accounts->update($customer, $new_data);
 	return true;
@@ -338,17 +359,21 @@ function update_maxmind($customer, $module = 'default', $ip = false) {
  * @param array $data the array of user data to get maxmind info for.
  * @return array the input $data but with the maxmind fields set
  */
-function update_maxmind_noaccount($data) {
+function update_maxmind_noaccount($data)
+{
 	require_once __DIR__.'/../../../minfraud/http/src/CreditCardFraudDetection.php';
 	//require_once ('include/accounts/maxmind/CreditCardFraudDetection.php');
 	//myadmin_log('maxmind', 'debug', "update_maxmind_noaccount Called", __LINE__, __FILE__);
 	$good = true;
 	$fields = ['city', 'state', 'zip'];
-	foreach ($fields as $field)
-		if (!isset($data[$field]) || trim($data[$field]) == '')
+	foreach ($fields as $field) {
+		if (!isset($data[$field]) || trim($data[$field]) == '') {
 			$good = false;
-	if (!isset($data['country']) || trim($data['country']) == '')
+		}
+	}
+	if (!isset($data['country']) || trim($data['country']) == '') {
 		$data['country'] = 'US';
+	}
 	if ($good === false) {
 		myadmin_log('maxmind', 'notice', "update_maxmind($customer, $module) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
 		$data['disable_cc'] = 1;
@@ -357,20 +382,26 @@ function update_maxmind_noaccount($data) {
 		$ccfs = new CreditCardFraudDetection;
 		$request['license_key'] = MAXMIND_LICENSE_KEY;
 		$request['i'] = \MyAdmin\Session::get_client_ip();
-		if (isset($data['city']) && trim($data['city']) != '')
-			$request['city'] = $data['city']; // set the billing city
-		if (isset($data['state']) && trim($data['state']) != '')
-			$request['region'] = $data['state']; // set the billing state
-		if (isset($data['zip']) && trim($data['zip']) != '')
-			$request['postal'] = $data['zip']; // set the billing zip code
-		if (isset($data['country']) && trim($data['country']) != '')
-			$request['country'] = $data['country']; // set the billing country
+		if (isset($data['city']) && trim($data['city']) != '') {
+			$request['city'] = $data['city'];
+		} // set the billing city
+		if (isset($data['state']) && trim($data['state']) != '') {
+			$request['region'] = $data['state'];
+		} // set the billing state
+		if (isset($data['zip']) && trim($data['zip']) != '') {
+			$request['postal'] = $data['zip'];
+		} // set the billing zip code
+		if (isset($data['country']) && trim($data['country']) != '') {
+			$request['country'] = $data['country'];
+		} // set the billing country
 		// Recommended fields
 		$request['domain'] = mb_substr($data['lid'], mb_strpos($data['lid'], '@') + 1);
-		if (isset($data['cc']) && $GLOBALS['tf']->decrypt($data['cc']) != '')
-			$request['bin'] = mb_substr($GLOBALS['tf']->decrypt($data['cc']), 0, 6); // bank identification number
-		if ($ip !== false)
-			$request['forwardedIP'] = $ip; // X-Forwarded-For or Client-IP HTTP Header
+		if (isset($data['cc']) && $GLOBALS['tf']->decrypt($data['cc']) != '') {
+			$request['bin'] = mb_substr($GLOBALS['tf']->decrypt($data['cc']), 0, 6);
+		} // bank identification number
+		if ($ip !== false) {
+			$request['forwardedIP'] = $ip;
+		} // X-Forwarded-For or Client-IP HTTP Header
 		$request['custPhone'] = $data['phone']; // Area-code and local prefix of customer phone number
 		// Optional fields
 		$request['requested_type'] = 'premium'; // Which level (free, city, premium) of CCFD to use
@@ -392,18 +423,21 @@ function update_maxmind_noaccount($data) {
 		$ccfs->query();
 		$response = $ccfs->output();
 		if (isset($data['country']) && in_array(strtolower($data['country']), ['br', 'tw'])) {
-			if (isset($response['score']) && $response['score'] < MAXMIND_COUNTRY_SCORE_LIMIT)
+			if (isset($response['score']) && $response['score'] < MAXMIND_COUNTRY_SCORE_LIMIT) {
 				$response['score'] += MAXMIND_COUNTRY_SCORE_PENALTY;
-			if (isset($response['riskScore']) && $response['riskScore'] <= MAXMIND_COUNTRY_RISKSCORE_LIMIT)
+			}
+			if (isset($response['riskScore']) && $response['riskScore'] <= MAXMIND_COUNTRY_RISKSCORE_LIMIT) {
 				$response['riskScore'] += MAXMIND_COUNTRY_SCORE_PENALTY;
+			}
 			if (isset($data['name'])) {
 				$nparts = explode(' ', $data['name']);
 				$first_name = $nparts[0];
 				include_once __DIR__.'/../../../../include/config/female_names.inc.php';
 				if (in_array($first_name, $female_names)) {
 					$response['female_name'] = 'yes';
-					if (isset($response['score']))
+					if (isset($response['score'])) {
 						$response['score'] = trim($response['score']);
+					}
 					if (MAXMIND_FEMALE_PENALTY_ENABLE == true && ((isset($response['score']) && $response['score'] < MAXMIND_FEMALE_SCORE_LIMIT) || $response['riskScore'] < MAXMIND_FEMALE_RISKSCORE_LIMIT)) {
 						if (isset($response['score'])) {
 							$response['original_score'] = $response['score'];
@@ -411,26 +445,31 @@ function update_maxmind_noaccount($data) {
 						}
 						$response['original_riskScore'] = $response['riskScore'];
 						$response['riskScore'] += MAXMIND_FEMALE_RISKSCORE_PENALTY;
-						if (isset($response['explanation']))
+						if (isset($response['explanation'])) {
 							$response['explanation'] = trim($response['explanation']).' The user has a female first name, as per request, that means + '.MAXMIND_FEMALE_SCORE_PENALTY.' to fraud score';
+						}
 					}
-				} else
+				} else {
 					$response['female_name'] = 'no';
-			} else
+				}
+			} else {
 				$response['female_name'] = 'no';
+			}
 
 			$distance_penalty = floor($response['distance'] / 1000);
 			myadmin_log('maxmind', 'info', 'Distance is '.$response['distance'].' or +'.$distance_penalty.' to Score', __LINE__, __FILE__);
 			$response['riskScore'] += $distance_penalty;
 
 			$data['maxmind_riskscore'] = trim($response['riskScore']);
-			if (isset($response['score']))
+			if (isset($response['score'])) {
 				$data['maxmind_score'] = trim($response['score']);
+			}
 			$data['maxmind'] = myadmin_stringify($response);
 			myadmin_log('maxmind', 'notice', 'Maxmind '.(isset($response['score']) ? 'Score: '.$response['score'] : '').' riskScore: '.$response['riskScore'], __LINE__, __FILE__);
 			myadmin_log('maxmind', 'debug', $new_data['maxmind'], __LINE__, __FILE__);
-			if ((MAXMIND_CARDER_LOCK == true && $response['carderEmail'] == 'Yes') || (isset($response['score']) && $response['score'] >= MAXMIND_SCORE_LOCK) || $response['riskScore'] >= MAXMIND_RISKSCORE_LOCK)
+			if ((MAXMIND_CARDER_LOCK == true && $response['carderEmail'] == 'Yes') || (isset($response['score']) && $response['score'] >= MAXMIND_SCORE_LOCK) || $response['riskScore'] >= MAXMIND_RISKSCORE_LOCK) {
 				$data['status'] = 'locked';
+			}
 			if ((isset($response['score']) && $response['score'] >= MAXMIND_SCORE_DISABLE_CC) || $response['riskScore'] >= MAXMIND_RISKSCORE_DISABLE_CC || $response['proxyScore'] >= MAXMIND_PROXYSCORE_DISABLE_CC) {
 				myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? "{$response['score']} >= " . MAXMIND_SCORE_DISABLE_CC : ''). " or  {$response['riskScore']} >= " . MAXMIND_RISKSCORE_DISABLE_CC.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
 				$data['disable_cc'] = 1;
