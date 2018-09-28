@@ -1,5 +1,5 @@
 {
-	"name": "detain/myadmin-maxmind-plugin",
+	"name": "detain/maxmind-plugin",
 	"type": "myadmin-plugin",
 	"description": "MaxMind handling plugin for MyAdmin",
 	"keywords": [
