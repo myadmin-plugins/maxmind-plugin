@@ -23,9 +23,8 @@
 		"symfony/event-dispatcher": ">=2.8.26",
 		"detain/myadmin-plugin-installer": "dev-master",
 		"maxmind/minfraud": "dev-master@dev",
-		"minfraud/http": "dev-master@dev",
-		"roave/security-advisories": "dev-master"
-	},
+		"minfraud/http": "dev-master@dev"
+    },
 	"require-dev": {
 		"phpunit/phpunit": "*",
 		"phpunit/phpunit-mock-objects": "*",
