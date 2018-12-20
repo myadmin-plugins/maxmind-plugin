@@ -156,7 +156,6 @@ function update_maxmind($customer, $module = 'default', $ip = false)
 	require_once __DIR__.'/../../../minfraud/http/src/CreditCardFraudDetection.php';
 	$module = get_module_name($module);
 	$db = get_module_db($module);
-	$GLOBALS['tf']->accounts->set_db_module($module);
 	$data = $GLOBALS['tf']->accounts->read($customer);
 	$db->query("select account_passwd from accounts where account_id=$customer", __LINE__, __FILE__);
 	$db->next_record(MYSQL_ASSOC);
@@ -170,7 +169,6 @@ function update_maxmind($customer, $module = 'default', $ip = false)
 	if ($db->num_rows() > 0) {
 		return true;
 	}
-	$GLOBALS['tf']->history->set_db_module($module);
 	$good = true;
 	$fields = ['city', 'state', 'zip'];
 	foreach ($fields as $field) {
