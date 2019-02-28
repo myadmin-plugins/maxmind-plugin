@@ -487,7 +487,7 @@ function update_maxmind_noaccount($data)
 				$data['payment_method'] = 'paypal';
 			}
 			if (MAXMIND_NORESPONSE_DISABLE_CC == true && (!isset($response['score']) && trim($response['score']) == '') && trim($response['riskScore']) == '') {
-				myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) BLANK Maxmind Score and BLANK MaxMind Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__);
+				myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) BLANK Maxmind Score and BLANK MaxMind Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__, $module);
 				$data['disable_cc'] = 1;
 				$data['payment_method'] = 'paypal';
 			}
