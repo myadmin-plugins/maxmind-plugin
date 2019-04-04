@@ -54,10 +54,10 @@ class Plugin
 	 */
 	public static function getRequirements(GenericEvent $event)
 	{
-        /**
-         * @var \MyAdmin\Plugins\Loader $this->loader
-         */
-        $loader = $event->getSubject();
+		/**
+		 * @var \MyAdmin\Plugins\Loader $this->loader
+		 */
+		$loader = $event->getSubject();
 		$loader->add_page_requirement('view_maxmind', '/../vendor/detain/myadmin-maxmind-plugin/src/view_maxmind.php');
 		$loader->add_page_requirement('maxmind_compare', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind_compare.php');
 		$loader->add_requirement('get_maxmind_field_descriptions', '/../vendor/detain/myadmin-maxmind-plugin/src/maxmind.inc.php');
@@ -70,12 +70,12 @@ class Plugin
 	/**
 	 * @param \Symfony\Component\EventDispatcher\GenericEvent $event
 	 */
-    public static function getSettings(GenericEvent $event)
-    {
-        /**
-         * @var \MyAdmin\Settings $settings
-         **/
-        $settings = $event->getSubject();
+	public static function getSettings(GenericEvent $event)
+	{
+		/**
+		 * @var \MyAdmin\Settings $settings
+		 **/
+		$settings = $event->getSubject();
 		$settings->add_radio_setting(_('Security & Fraud'), _('MaxMind Fraud Detection'), 'maxmind_enable', _('Enable MaxMind'), _('Enable MaxMind'), MAXMIND_ENABLE, [true, false], ['Enabled', 'Disabled']);
 		$settings->add_text_setting(_('Security & Fraud'), _('MaxMind Fraud Detection'), 'maxmind_user_id', _('User ID'), _('User ID'), (defined('MAXMIND_USER_ID') ? MAXMIND_USER_ID : ''));
 		$settings->add_text_setting(_('Security & Fraud'), _('MaxMind Fraud Detection'), 'maxmind_license_key', _('License Key'), _('License Key'), (defined('MAXMIND_LICENSE_KEY') ? MAXMIND_LICENSE_KEY : ''));

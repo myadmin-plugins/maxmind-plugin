@@ -55,10 +55,13 @@
 			'mainelement',
 			'itemtable',
 			'itempager'
-			], [
+			],
+			[
 			'histmainelement',
 			'histtable',
 			'histpager'
-								   ], ($bootstrap == true ? $smarty->fetch('tablesorter/tablesorter_bootstrap.tpl') : $smarty->fetch('tablesorter/tablesorter.tpl')));
+								   ],
+			($bootstrap == true ? $smarty->fetch('tablesorter/tablesorter_bootstrap.tpl') : $smarty->fetch('tablesorter/tablesorter.tpl'))
+		);
 		add_output($tablesorter);
 	}
