@@ -65,5 +65,5 @@ jQuery(document).ready(function () {
 		$smarty = new TFSmarty;
 		$smarty->assign('maxmind', $maxmind);
 		$smarty->assign('maxmind_fields', obj2array(json_decode(file_get_contents(INCLUDE_ROOT.'/config/maxmind_output_fields.json'))));
-		add_output($smarty->fetch('view_maxmind.tpl'));
+		add_output($smarty->fetch('billing/view_maxmind.tpl'));
 	}
