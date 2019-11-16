@@ -310,10 +310,6 @@ function update_maxmind($customer, $module = 'default', $ip = false)
 		$smarty->assign('account_lid', $GLOBALS['tf']->accounts->cross_reference($customer));
 		$smarty->assign('fraudArray', $response);
 		$email = $smarty->fetch('email/admin/fraud.tpl');
-		$headers = '';
-		$headers .= 'MIME-Version: 1.0'.PHP_EOL;
-		$headers .= 'Content-type: text/html; charset=UTF-8'.PHP_EOL;
-		$headers .= 'From: '.TITLE.' <'.EMAIL_FROM.'>'.PHP_EOL;
 		$new_data['maxmind_riskscore'] = trim($response['riskScore']);
 		if (isset($response['score'])) {
 			$new_data['maxmind_score'] = trim($response['score']);
@@ -341,17 +337,17 @@ function update_maxmind($customer, $module = 'default', $ip = false)
 			$new_data['disable_cc'] = 1;
 			$new_data['payment_method'] = 'paypal';
 			$subject = TITLE.' MISSING MaxMind Data - Possible Fraud';
-			admin_mail($subject, $email, $headers, false, 'admin/fraud.tpl');
+			(new MyAdmin\Mail())->adminMail($subject, $email, false, 'admin/fraud.tpl');
 		}
 		if ((isset($response['score']) && $response['score'] > MAXMIND_POSSIBLE_FRAUD_SCORE) || $response['riskScore'] >= MAXMIND_POSSIBLE_FRAUD_SCORE) {
 			$subject = TITLE.' MaxMind Possible Fraud';
-			admin_mail($subject, $email, $headers, false, 'admin/fraud.tpl');
-			myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? $response['score']. ' >' . MAXMIND_POSSIBLE_FRAUD_SCORE : ''). " or  {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.',   Emailing Possible Fraud', __LINE__, __FILE__);
+			(new MyAdmin\Mail())->adminMail($subject, $email, false, 'admin/fraud.tpl');
+			myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? $response['score']. ' >' . MAXMIND_POSSIBLE_FRAUD_SCORE : ''). " or  {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.',  Emailing Possible Fraud', __LINE__, __FILE__);
 		}
 		if ($response['queriesRemaining'] <= MAXMIND_QUERIES_REMAINING) {
 			$subject = 'MaxMind Down To '.$response['queriesRemaining'].' Queries Remaining';
 			myadmin_log('maxmind', 'warning', $subject, __LINE__, __FILE__);
-			admin_mail($subject, $subject, $headers, false, 'admin/maxmind_queries.tpl');
+			(new MyAdmin\Mail())->adminMail($subject, $subject, false, 'admin/maxmind_queries.tpl');
 		}
 	}
 	$GLOBALS['tf']->accounts->update($customer, $new_data);
