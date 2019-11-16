@@ -337,17 +337,17 @@ function update_maxmind($customer, $module = 'default', $ip = false)
 			$new_data['disable_cc'] = 1;
 			$new_data['payment_method'] = 'paypal';
 			$subject = TITLE.' MISSING MaxMind Data - Possible Fraud';
-			(new MyAdmin\Mail())->adminMail($subject, $email, false, 'admin/fraud.tpl');
+			(new \MyAdmin\Mail())->adminMail($subject, $email, false, 'admin/fraud.tpl');
 		}
 		if ((isset($response['score']) && $response['score'] > MAXMIND_POSSIBLE_FRAUD_SCORE) || $response['riskScore'] >= MAXMIND_POSSIBLE_FRAUD_SCORE) {
 			$subject = TITLE.' MaxMind Possible Fraud';
-			(new MyAdmin\Mail())->adminMail($subject, $email, false, 'admin/fraud.tpl');
+			(new \MyAdmin\Mail())->adminMail($subject, $email, false, 'admin/fraud.tpl');
 			myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? $response['score']. ' >' . MAXMIND_POSSIBLE_FRAUD_SCORE : ''). " or  {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.',  Emailing Possible Fraud', __LINE__, __FILE__);
 		}
 		if ($response['queriesRemaining'] <= MAXMIND_QUERIES_REMAINING) {
 			$subject = 'MaxMind Down To '.$response['queriesRemaining'].' Queries Remaining';
 			myadmin_log('maxmind', 'warning', $subject, __LINE__, __FILE__);
-			(new MyAdmin\Mail())->adminMail($subject, $subject, false, 'admin/maxmind_queries.tpl');
+			(new \MyAdmin\Mail())->adminMail($subject, $subject, false, 'admin/maxmind_queries.tpl');
 		}
 	}
 	$GLOBALS['tf']->accounts->update($customer, $new_data);
