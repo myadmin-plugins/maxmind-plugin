@@ -167,6 +167,7 @@ function update_maxmind($customer, $module = 'default', $ip = false)
 	}
 	$db->query("select * from access_log where access_owner={$customer} and access_login <= date_sub(now(), INTERVAL 1 YEAR) limit 1", __LINE__, __FILE__);
 	if ($db->num_rows() > 0) {
+		myadmin_log('maxmind', 'notice', "update_maxmind({$customer}, {$module}) Customer is older than a year old, Skipping Updating Maxmind", __LINE__, __FILE__);
 		return true;
 	}
 	$good = true;
