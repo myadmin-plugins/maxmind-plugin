@@ -22,16 +22,16 @@
 		"ext-curl": "*",
 		"symfony/event-dispatcher": ">=2.8.26",
 		"detain/myadmin-plugin-installer": "dev-master",
-		"maxmind/minfraud": "dev-master@dev",
-		"minfraud/http": "dev-master@dev"
+		"maxmind/minfraud": "dev-main",
+		"minfraud/http": "dev-main"
     },
 	"require-dev": {
 		"phpunit/phpunit": "*",
 		"phpunit/phpunit-mock-objects": "*",
 		"vlucas/phpdotenv": "*",
-		"codeclimate/php-test-reporter": "dev-master",
+		"codeclimate/php-test-reporter": "*",
 		"satooshi/php-coveralls": "*",
-		"codacy/coverage": "dev-master"
+		"codacy/coverage": "*"
 	},
 	"autoload": {
 		"psr-4": {
