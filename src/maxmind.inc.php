@@ -162,7 +162,7 @@ function update_maxmind($customer, $module = 'default', $ip = false)
 	$md5_passwd = $db->Record['account_passwd'];
 	$md5_login = md5($data['account_lid']);
 	if (isset($data['cc_whitelist']) && $data['cc_whitelist'] == 1) {
-		myadmin_log('maxmind', 'notice', "update_maxmind({$customer}, {$module}) Customer is White Listed for CCs, Skipping Updating Maxmind", __LINE__, __FILE__);
+		//myadmin_log('maxmind', 'notice', "update_maxmind({$customer}, {$module}) Customer is White Listed for CCs, Skipping Updating Maxmind", __LINE__, __FILE__);
 		return true;
 	}
 	$db->query("select * from access_log where access_owner={$customer} and access_login <= date_sub(now(), INTERVAL 1 YEAR) limit 1", __LINE__, __FILE__);
