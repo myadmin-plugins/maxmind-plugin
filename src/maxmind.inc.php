@@ -291,8 +291,7 @@ function update_maxmind($customer, $module = 'default', $ip = false)
 				$response['riskScore'] = 0;
 		}
 		*/
-
-		$distance_penalty = floor($response['distance'] / 100);
+        $distance_penalty = floor(floatval($response['distance']) / 100);
 		$distance_penalty = $distance_penalty > 50 ? 50 : $distance_penalty;
 		myadmin_log('maxmind', 'info', 'Distance is '.$response['distance'].' or +'.$distance_penalty.' to riskScore (previously '.$response['riskScore'].')', __LINE__, __FILE__);
 		$response['riskScore'] += $distance_penalty;
