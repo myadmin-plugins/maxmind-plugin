@@ -1,96 +1,96 @@
 #!/usr/bin/env php
 <?php
-		$data_parse = [
-			'Risk Score' => [
-				'riskscore' => ['title' => 'Risk Score', 'message' => 'New fraud score representing the estimated probability that the order is fraud, based off of analysis of past transactions.'],
-				'score' => ['title' => 'Fraud Score', 'message' => 'Overall fraud score based on outputs listed above. This is the original fraud score, and is based on a simple formula. It has been replaced with riskScore (see above), but is kept for backwards compatibility.'],
-				'explanation' => ['title' => 'Explanation', 'message' => 'A brief explanation of the score, detailing what factors contributed to it, according to our formula.']
-			],
-			'Geographical IP Address Location Checking ' => [
-				'countrymatch' => ['title' => 'Country Match', 'message' => 'Whether country of IP address matches billing address country (mismatch = higher risk).'],
-				'countrycode' => ['title' => 'IP Country Code', 'message' => 'Country Code of the IP address.'],
-				'highriskcountry' => ['title' => 'High Risk Country', 'message' => 'Whether IP address or billing address country is in Egypt, Ghana, Indonesia, Lebanon, Macedonia, Morocco, Nigeria, Pakistan, Romania, Serbia and Montenegro, Ukraine, or Vietnam.'],
-				'distance' => ['title' => 'IP to Billing Distance', 'message' => 'Distance from IP address to Billing Location in kilometers (large distance = higher risk).'],
-				'ip_region' => ['title' => 'IP State or Province', 'message' => 'Estimated State/Region of the IP address, ISO-3166-2/FIPS 10-4 code.'],
-				'ip_city' => ['title' => 'IP City', 'message' => 'Estimated City of the IP address.'],
-				'ip_latitude'			=> ['title' => 'IP Latitude', 'message' => 'Estimated Latitude of the IP address.'],
-				'ip_longitude'			=> ['title' => 'IP Longitude', 'message' => 'Estimated Longitude of the IP address.'],
-				'ip_isp'				=> ['title' => 'IP ISP', 'message' => 'ISP of the IP address.'],
-				'ip_org'				=> ['title' => 'IP Orgainization', 'message' => 'Organization of the IP address.']
-			],
-			'Proxy Detection ' => [
-				'anonymousproxy'		=> ['title' => 'Anonymous Proxy?', 'message' => 'Whether IP address is Anonymous Proxy (anonymous proxy = very high risk).'],
-				'proxyscore'			=> ['title' => 'Proxy Score', 'message' => 'Likelihood of IP Address being an Open Proxy.'],
-				'istransproxy'			=> ['title' => 'Transaction Proxy', 'message' => 'Whether IP address is in our database of known transparent proxy servers, returned if forwardedIP is passed as an input.']
-			],
-			'E-mail and Login Checks' => [
-				'freemail'				=> ['title' => 'Free E-mail Provider?', 'message' => 'Whether e-mail is from free e-mail provider (free e-mail = higher risk).'],
-				'carderemail'			=> ['title' => 'Carder Email', 'message' => 'Whether e-mail is in database of high risk e-mails.'],
-				'highriskusername'		=> ['title' => 'High Risk Username', 'message' => 'Whether usernameMD5 input is in database of high risk usernames. Only returned if usernameMD5 is included in inputs.'],
-				'highriskpassword'		=> ['title' => 'High Risk Password', 'message' => 'Whether passwordMD5 input is in database of high risk passwords. Only returned if passwordMD5 is included in inputs.']
-			],
-			'Issuing Bank BIN Number Checks' => [
-				'binmatch'				=> ['title' => 'BIN Match', 'message' => 'Whether country of issuing bank based on BIN number matches billing address country.*'],
-				'bincountry'			=> ['title' => 'BIN Country Code', 'message' => 'Country Code of the bank which issued the credit card based on BIN number.*'],
-				'binnamematch'			=> ['title' => 'BIN Name Match', 'message' => 'Whether name of issuing bank matches inputted binName. A return value of Yes provides a positive indication that cardholder is in possession of credit card.*'],
-				'binname'				=> ['title' => 'BIN Name', 'message' => 'Name of the bank which issued the credit card based on BIN number*. Available for approximately 96% of BIN numbers.'],
-				'binphonematch'			=> ['title' => 'BIN Phone Match', 'message' => 'Whether customer service phone number matches inputed binPhone. A return value of Yes provides a positive indication that cardholder is in possession of credit card.*'],
-				'binphone'				=> ['title' => 'BIN Phone', 'message' => 'Customer service phone number listed on back of credit card*. Available for approximately 75% of BIN numbers. In some cases phone number returned may be outdated.']
-			],
-			'Address and Phone Number Checks' => [
-				'custphoneinbillingloc'	=> ['title' => 'Phone In Billing Location?', 'message' => 'Whether the customer phone number is in the billing zip code. A return value of Yes provides a positive indication that the phone number listed belongs to the cardholder. A return value of No indicates that the phone number may be in a different area, or may not be listed in our database. NotFound is returned when the phone number prefix cannot be found in our database at all. Currently we only support US Phone numbers.'],
-				'shipforward'			=> ['title' => 'Shipping Forward', 'message' => 'Whether shipping address is in database of known mail drops.'],
-				'citypostalmatch'		=> ['title' => 'City Postal Code Match', 'message' => 'Whether billing city and state match zipcode. Currently available for US addresses only, returns empty string outside the US.'],
-				'shipcitypostalmatch'	=> ['title' => 'Shipping City Postal Match', 'message' => 'Whether shipping city and state match zipcode. Currently available for US addresses only, returns empty string outside the US.']
-			],
-			'Misc Data' => [
-				'errors'				=> ['title' => 'Errors', 'message' => 'Errors reported during lookup.'],
-				'maxmindid'				=> ['title' => 'FraudScore ID', 'message' => 'Unique id assigned to your FraudScore lookup.'],
-				'remaining'				=> ['title' => 'Remaining Credits', 'message' => 'Credits remaining on your FraudScore account.']
-			]
-		];
-	$json = json_decode(file_get_contents('../../include/config/maxmind_output.json'));
-	$rows = [];
-	$sql = "create table maxmind_output (
+        $data_parse = [
+            'Risk Score' => [
+                'riskscore' => ['title' => 'Risk Score', 'message' => 'New fraud score representing the estimated probability that the order is fraud, based off of analysis of past transactions.'],
+                'score' => ['title' => 'Fraud Score', 'message' => 'Overall fraud score based on outputs listed above. This is the original fraud score, and is based on a simple formula. It has been replaced with riskScore (see above), but is kept for backwards compatibility.'],
+                'explanation' => ['title' => 'Explanation', 'message' => 'A brief explanation of the score, detailing what factors contributed to it, according to our formula.']
+            ],
+            'Geographical IP Address Location Checking ' => [
+                'countrymatch' => ['title' => 'Country Match', 'message' => 'Whether country of IP address matches billing address country (mismatch = higher risk).'],
+                'countrycode' => ['title' => 'IP Country Code', 'message' => 'Country Code of the IP address.'],
+                'highriskcountry' => ['title' => 'High Risk Country', 'message' => 'Whether IP address or billing address country is in Egypt, Ghana, Indonesia, Lebanon, Macedonia, Morocco, Nigeria, Pakistan, Romania, Serbia and Montenegro, Ukraine, or Vietnam.'],
+                'distance' => ['title' => 'IP to Billing Distance', 'message' => 'Distance from IP address to Billing Location in kilometers (large distance = higher risk).'],
+                'ip_region' => ['title' => 'IP State or Province', 'message' => 'Estimated State/Region of the IP address, ISO-3166-2/FIPS 10-4 code.'],
+                'ip_city' => ['title' => 'IP City', 'message' => 'Estimated City of the IP address.'],
+                'ip_latitude'			=> ['title' => 'IP Latitude', 'message' => 'Estimated Latitude of the IP address.'],
+                'ip_longitude'			=> ['title' => 'IP Longitude', 'message' => 'Estimated Longitude of the IP address.'],
+                'ip_isp'				=> ['title' => 'IP ISP', 'message' => 'ISP of the IP address.'],
+                'ip_org'				=> ['title' => 'IP Orgainization', 'message' => 'Organization of the IP address.']
+            ],
+            'Proxy Detection ' => [
+                'anonymousproxy'		=> ['title' => 'Anonymous Proxy?', 'message' => 'Whether IP address is Anonymous Proxy (anonymous proxy = very high risk).'],
+                'proxyscore'			=> ['title' => 'Proxy Score', 'message' => 'Likelihood of IP Address being an Open Proxy.'],
+                'istransproxy'			=> ['title' => 'Transaction Proxy', 'message' => 'Whether IP address is in our database of known transparent proxy servers, returned if forwardedIP is passed as an input.']
+            ],
+            'E-mail and Login Checks' => [
+                'freemail'				=> ['title' => 'Free E-mail Provider?', 'message' => 'Whether e-mail is from free e-mail provider (free e-mail = higher risk).'],
+                'carderemail'			=> ['title' => 'Carder Email', 'message' => 'Whether e-mail is in database of high risk e-mails.'],
+                'highriskusername'		=> ['title' => 'High Risk Username', 'message' => 'Whether usernameMD5 input is in database of high risk usernames. Only returned if usernameMD5 is included in inputs.'],
+                'highriskpassword'		=> ['title' => 'High Risk Password', 'message' => 'Whether passwordMD5 input is in database of high risk passwords. Only returned if passwordMD5 is included in inputs.']
+            ],
+            'Issuing Bank BIN Number Checks' => [
+                'binmatch'				=> ['title' => 'BIN Match', 'message' => 'Whether country of issuing bank based on BIN number matches billing address country.*'],
+                'bincountry'			=> ['title' => 'BIN Country Code', 'message' => 'Country Code of the bank which issued the credit card based on BIN number.*'],
+                'binnamematch'			=> ['title' => 'BIN Name Match', 'message' => 'Whether name of issuing bank matches inputted binName. A return value of Yes provides a positive indication that cardholder is in possession of credit card.*'],
+                'binname'				=> ['title' => 'BIN Name', 'message' => 'Name of the bank which issued the credit card based on BIN number*. Available for approximately 96% of BIN numbers.'],
+                'binphonematch'			=> ['title' => 'BIN Phone Match', 'message' => 'Whether customer service phone number matches inputed binPhone. A return value of Yes provides a positive indication that cardholder is in possession of credit card.*'],
+                'binphone'				=> ['title' => 'BIN Phone', 'message' => 'Customer service phone number listed on back of credit card*. Available for approximately 75% of BIN numbers. In some cases phone number returned may be outdated.']
+            ],
+            'Address and Phone Number Checks' => [
+                'custphoneinbillingloc'	=> ['title' => 'Phone In Billing Location?', 'message' => 'Whether the customer phone number is in the billing zip code. A return value of Yes provides a positive indication that the phone number listed belongs to the cardholder. A return value of No indicates that the phone number may be in a different area, or may not be listed in our database. NotFound is returned when the phone number prefix cannot be found in our database at all. Currently we only support US Phone numbers.'],
+                'shipforward'			=> ['title' => 'Shipping Forward', 'message' => 'Whether shipping address is in database of known mail drops.'],
+                'citypostalmatch'		=> ['title' => 'City Postal Code Match', 'message' => 'Whether billing city and state match zipcode. Currently available for US addresses only, returns empty string outside the US.'],
+                'shipcitypostalmatch'	=> ['title' => 'Shipping City Postal Match', 'message' => 'Whether shipping city and state match zipcode. Currently available for US addresses only, returns empty string outside the US.']
+            ],
+            'Misc Data' => [
+                'errors'				=> ['title' => 'Errors', 'message' => 'Errors reported during lookup.'],
+                'maxmindid'				=> ['title' => 'FraudScore ID', 'message' => 'Unique id assigned to your FraudScore lookup.'],
+                'remaining'				=> ['title' => 'Remaining Credits', 'message' => 'Credits remaining on your FraudScore account.']
+            ]
+        ];
+    $json = json_decode(file_get_contents('../../include/config/maxmind_output.json'));
+    $rows = [];
+    $sql = "create table maxmind_output (
     `account_id` int(11) NOT NULL DEFAULT 0 COMMENT 'Account ID this lookup was for.',
 ";
-	foreach ($json as $idx => $data) {
-		if ($data[1] == '' && $data[2] == '' && $data[3] == '') {
-			if (isset($cat_rows)) {
-				$rows[$category] = $cat_rows;
-			}
-			$lines = explode("\n", $data[0]);
-			$category = $lines[0];
-			$cat_rows = [];
-			if (count($lines) > 1) {
-				$cat_rows['_desc'] = str_replace($category.PHP_EOL, '', $data[0]);
-			}
-			continue;
-		}
-		if (isset($cat_rows)) {
-			$cat_rows[$data[0]] = [
-				'title' => trim(ucwords(str_replace(['_', 'maxmind', 'queries', 'bin'], [' ', 'maxmind ', 'queries ', 'BIN '], $data[0]))),
-				'desc' => $data[2],
-				'type' => $data[1],
-				'api_ver' => $data[3]
-			];
-			foreach ($data_parse as $cat => $catdata) {
-				foreach ($catdata as $field => $values) {
-					if ($data[0] == $field) {
-						$cat_rows[$data[0]]['title'] = $values['title'];
-					}
-				}
-			}
-			$sql .= '    `' .strtolower($data[0])."` varchar(255) DEFAULT NULL COMMENT '".@mysql_escape_string(str_replace("\n", ' ', $cat_rows[$data[0]]['desc']))."',\n";
-		}
-	}
-	$sql .= "    UNIQUE KEY `maxmindid` (`maxmindid`),
+    foreach ($json as $idx => $data) {
+        if ($data[1] == '' && $data[2] == '' && $data[3] == '') {
+            if (isset($cat_rows)) {
+                $rows[$category] = $cat_rows;
+            }
+            $lines = explode("\n", $data[0]);
+            $category = $lines[0];
+            $cat_rows = [];
+            if (count($lines) > 1) {
+                $cat_rows['_desc'] = str_replace($category.PHP_EOL, '', $data[0]);
+            }
+            continue;
+        }
+        if (isset($cat_rows)) {
+            $cat_rows[$data[0]] = [
+                'title' => trim(ucwords(str_replace(['_', 'maxmind', 'queries', 'bin'], [' ', 'maxmind ', 'queries ', 'BIN '], $data[0]))),
+                'desc' => $data[2],
+                'type' => $data[1],
+                'api_ver' => $data[3]
+            ];
+            foreach ($data_parse as $cat => $catdata) {
+                foreach ($catdata as $field => $values) {
+                    if ($data[0] == $field) {
+                        $cat_rows[$data[0]]['title'] = $values['title'];
+                    }
+                }
+            }
+            $sql .= '    `' .strtolower($data[0])."` varchar(255) DEFAULT NULL COMMENT '".@mysql_escape_string(str_replace("\n", ' ', $cat_rows[$data[0]]['desc']))."',\n";
+        }
+    }
+    $sql .= "    UNIQUE KEY `maxmindid` (`maxmindid`),
     KEY `account_id` (`account_id`)
 ) ENGINE=InnoDB;\n";
-	if (count($cat_rows) > 0) {
-		$rows[$category] = $cat_rows;
-	}
-	file_put_contents('../../include/config/maxmind_output_fields.json', json_encode($rows, JSON_PRETTY_PRINT));
+    if (count($cat_rows) > 0) {
+        $rows[$category] = $cat_rows;
+    }
+    file_put_contents('../../include/config/maxmind_output_fields.json', json_encode($rows, JSON_PRETTY_PRINT));
 $sql .= "
 ALTER TABLE maxmind_output
   DROP INDEX account_id,
@@ -145,20 +145,20 @@ ALTER TABLE maxmind_output
   ADD CONSTRAINT FK_maxmind_output_accounts_account_id FOREIGN KEY (account_id)
     REFERENCES accounts(account_id) ON DELETE CASCADE ON UPDATE CASCADE;
 ";
-	file_put_contents('maxmind_table.sql', $sql);
+    file_put_contents('maxmind_table.sql', $sql);
 //	print_r($rows);
-	exit;
+    exit;
 
-		$desc_array = ['riskscore' => '(Decimal from 0 to 100)', 'score' => '(Decimal from 0 to 10)', 'proxyscore' => '(Decimal from 0 to 10)'];
+        $desc_array = ['riskscore' => '(Decimal from 0 to 100)', 'score' => '(Decimal from 0 to 10)', 'proxyscore' => '(Decimal from 0 to 10)'];
 
-		$count = 1000;
-		foreach ($data_parse as $key => $val) {
-			$output_results .= "<strong>{$key}:</strong><br /><table>";
-			foreach ($val as $k => $v) {
-				if ($results[$k] == '') {
-					continue;
-				}
-				$output_results .= '<tr><td style="text-align: right; vertical-align: top; width: 150px;">' .$this->help($v[title], $v[message], $count++)."</td><td>{$results[$k]} ".(isset($desc_array[$k]) ?" {$desc_array[$k]}": ''). '</td></tr>';
-			}
-			$output_results .= '</table><br />';
-		}
+        $count = 1000;
+        foreach ($data_parse as $key => $val) {
+            $output_results .= "<strong>{$key}:</strong><br /><table>";
+            foreach ($val as $k => $v) {
+                if ($results[$k] == '') {
+                    continue;
+                }
+                $output_results .= '<tr><td style="text-align: right; vertical-align: top; width: 150px;">' .$this->help($v[title], $v[message], $count++)."</td><td>{$results[$k]} ".(isset($desc_array[$k]) ? " {$desc_array[$k]}" : ''). '</td></tr>';
+            }
+            $output_results .= '</table><br />';
+        }

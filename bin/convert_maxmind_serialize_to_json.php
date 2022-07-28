@@ -35,33 +35,33 @@ $bad = 0;
 $good = 0;
 $skipped = 0;
 while ($db->next_record(MYSQL_ASSOC)) {
-	if (mb_substr($db->Record['account_value'], 0, 1) == '{') {
-		$skipped++;
-		continue;
-	}
-	$maxmind = @myadmin_unstringify($db->Record['account_value']);
-	if ($maxmind === false) {
-		if (preg_match_all('/s:[0-9]*:\\\*"(?P<key>.*)\\\*";s:[0-9]*:\\\*"(?P<value>.*)\\\*";/mUu', $db->Record['account_value'], $matches)) {
-			$maxmind = [];
-			foreach ($matches['key'] as $idx => $key) {
-				$value = $matches['value'][$idx];
-				$maxmind[$key] = $value;
-			}
-		} else {
-			//echo "Didnt match: {$db->Record['account_value']}\n";
-		}
-	}
-	if ($maxmind !== false) {
-		$good++;
-		$new_maxmind = json_encode($maxmind);
-		$db2->query("update accounts_ext set account_value='".$db2->real_escape($new_maxmind)."' where account_id={$db->Record['account_id']} and account_key='{$db->Record['account_key']}'");
-	//echo "OLD:".mb_strlen($db->Record['account_value'])."\n{$db->Record['account_value']}\n";
-		//echo "NEW:".mb_strlen($new_maxmind)."\n{$new_maxmind}\n";
-	} else {
-		echo 'Problem unserializing: ' . var_export($db->Record, true).PHP_EOL;
-		//$db2->query("delete from accounts_ext where account_id={$db->Record['account_id']} and account_key='{$db->Record['account_key']}'");
-		$bad++;
-	}
+    if (mb_substr($db->Record['account_value'], 0, 1) == '{') {
+        $skipped++;
+        continue;
+    }
+    $maxmind = @myadmin_unstringify($db->Record['account_value']);
+    if ($maxmind === false) {
+        if (preg_match_all('/s:[0-9]*:\\\*"(?P<key>.*)\\\*";s:[0-9]*:\\\*"(?P<value>.*)\\\*";/mUu', $db->Record['account_value'], $matches)) {
+            $maxmind = [];
+            foreach ($matches['key'] as $idx => $key) {
+                $value = $matches['value'][$idx];
+                $maxmind[$key] = $value;
+            }
+        } else {
+            //echo "Didnt match: {$db->Record['account_value']}\n";
+        }
+    }
+    if ($maxmind !== false) {
+        $good++;
+        $new_maxmind = json_encode($maxmind);
+        $db2->query("update accounts_ext set account_value='".$db2->real_escape($new_maxmind)."' where account_id={$db->Record['account_id']} and account_key='{$db->Record['account_key']}'");
+    //echo "OLD:".mb_strlen($db->Record['account_value'])."\n{$db->Record['account_value']}\n";
+        //echo "NEW:".mb_strlen($new_maxmind)."\n{$new_maxmind}\n";
+    } else {
+        echo 'Problem unserializing: ' . var_export($db->Record, true).PHP_EOL;
+        //$db2->query("delete from accounts_ext where account_id={$db->Record['account_id']} and account_key='{$db->Record['account_key']}'");
+        $bad++;
+    }
 }
 $end = time();
 echo "Finished, {$skipped} Skipped, {$good} Good, {$bad} Bad, ".($end - $start)." seconds\n";

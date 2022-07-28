@@ -3,7 +3,7 @@
 //require_once __DIR__.'/../../vendor/autoload.php';
 require_once __DIR__.'/../../vendor/minfraud/http/src/CreditCardFraudDetection.php';
 
-$ccfs = new CreditCardFraudDetection;
+$ccfs = new CreditCardFraudDetection();
 
 $h['license_key'] = 'xxxxxxxxxxxx';
 
