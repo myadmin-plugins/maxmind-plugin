@@ -78,7 +78,7 @@ class Plugin
         $settings = $event->getSubject();
         $settings->add_radio_setting(_('Security & Fraud'), _('MaxMind Fraud Detection'), 'maxmind_enable', _('Enable MaxMind'), _('Enable MaxMind'), MAXMIND_ENABLE, [true, false], ['Enabled', 'Disabled']);
         $settings->add_text_setting(_('Security & Fraud'), _('MaxMind Fraud Detection'), 'maxmind_user_id', _('User ID'), _('User ID'), (defined('MAXMIND_USER_ID') ? MAXMIND_USER_ID : ''));
-        $settings->add_text_setting(_('Security & Fraud'), _('MaxMind Fraud Detection'), 'maxmind_license_key', _('License Key'), _('License Key'), (defined('MAXMIND_LICENSE_KEY') ? MAXMIND_LICENSE_KEY : ''));
+        $settings->add_password_setting(_('Security & Fraud'), _('MaxMind Fraud Detection'), 'maxmind_license_key', _('License Key'), _('License Key'), (defined('MAXMIND_LICENSE_KEY') ? MAXMIND_LICENSE_KEY : ''));
         $settings->add_radio_setting(_('Security & Fraud'), _('MaxMind Fraud Detection'), 'maxmind_carder_lock', _('Lock if Carder Email'), _('Lock if Carder Email'), MAXMIND_CARDER_LOCK, [true, false], ['Enabled', 'Disabled']);
         $settings->add_text_setting(_('Security & Fraud'), _('MaxMind Fraud Detection'), 'maxmind_score_lock', _('Lock if Score >= #'), _('Lock if Score >= #'), (defined('MAXMIND_SCORE_LOCK') ? MAXMIND_SCORE_LOCK : ''));
         $settings->add_text_setting(_('Security & Fraud'), _('MaxMind Fraud Detection'), 'maxmind_score_disable_cc', _('Disable CC if Score >= #'), _('Disable CC if Score >= #'), (defined('MAXMIND_SCORE_DISABLE_CC') ? MAXMIND_SCORE_DISABLE_CC : ''));
