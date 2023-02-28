@@ -208,9 +208,6 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
     if (isset($ccData['cc']) && $GLOBALS['tf']->decrypt($ccData['cc']) != '') {
         $request['bin'] = mb_substr($GLOBALS['tf']->decrypt($ccData['cc']), 0, 6); // bank identification number
     }
-    if ($ip !== false) {
-
-    }
     myadmin_log('maxmind', 'info', "update_maxmind({$custid}, {$ip}) Called with ".json_encode($request), __LINE__, __FILE__);
     \StatisticClient::tick('MaxMind', 'MinFraudLookup');
     $ccfs = new CreditCardFraudDetection();
