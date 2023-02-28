@@ -144,213 +144,176 @@ function get_maxmind_field_descriptions()
  * update_maxmind()
  * updates the MaxMind data for a given user.
  *
- * @param integer     $customer customer id
- * @param string      $module   module to update it with
+ * @param integer     $custid customer id
  * @param bool|string $ip       ip address to register with the query, or false to have it use session ip
+ * @param bool|int $ccIdx       false for global account or idx of cc your updating info on
  * @return bool pretty much always returns true
  * @throws \Exception
  */
-function update_maxmind($customer, $module = 'default', $ip = false)
+function update_maxmind($custid, $ip = false, $ccIdx = false)
 {
-    $customer = (int)$customer;
+    $custid = (int)$custid;
+    $good = true;
+    $new_data = [];
+    $requiredFields = ['city', 'state', 'zip'];
+    $fields = [
+        'city' => 'city',
+        'state' => 'region',
+        'zip' => 'postal',
+        'country' => 'country',
+        'phone' => 'custPhone,'
+    ];
     require_once __DIR__.'/../../../minfraud/http/src/CreditCardFraudDetection.php';
-    $module = get_module_name($module);
+    $module = get_module_name('default');
     $db = get_module_db($module);
-    $data = $GLOBALS['tf']->accounts->read($customer);
-    $db->query("select account_passwd from accounts where account_id=$customer", __LINE__, __FILE__);
+    $data = $GLOBALS['tf']->accounts->read($custid);
+    function_requirements('parse_ccs');
+    $ccs = parse_ccs($data);
+    $ccData = $ccIdx !== false ? $ccs[$ccIdx] : $data;
+    if (isset($data['cc_whitelist']) && $data['cc_whitelist'] == 1) { // skip maxmind if whitelisted
+        return true;
+    }
+    $db->query("select * from access_log where access_owner={$custid} and access_login <= date_sub(now(), INTERVAL 1 YEAR) limit 1", __LINE__, __FILE__);
+    if ($db->num_rows() > 0) { // skip maxmind if account is older than a year
+        myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) customer is older than a year old, Skipping Updating Maxmind", __LINE__, __FILE__);
+        return true;
+    }
+    $db->query("select account_passwd from accounts where account_id={$custid}", __LINE__, __FILE__);
     $db->next_record(MYSQL_ASSOC);
     $md5_passwd = $db->Record['account_passwd'];
-    $md5_login = md5($data['account_lid']);
-    if (isset($data['cc_whitelist']) && $data['cc_whitelist'] == 1) {
-        //myadmin_log('maxmind', 'notice', "update_maxmind({$customer}, {$module}) Customer is White Listed for CCs, Skipping Updating Maxmind", __LINE__, __FILE__);
-        return true;
-    }
-    $db->query("select * from access_log where access_owner={$customer} and access_login <= date_sub(now(), INTERVAL 1 YEAR) limit 1", __LINE__, __FILE__);
-    if ($db->num_rows() > 0) {
-        myadmin_log('maxmind', 'notice', "update_maxmind({$customer}, {$module}) Customer is older than a year old, Skipping Updating Maxmind", __LINE__, __FILE__);
-        return true;
-    }
-    $good = true;
-    $fields = ['city', 'state', 'zip'];
-    foreach ($fields as $field) {
-        if (!isset($data[$field]) || trim($data[$field]) == '') {
+    $request = [
+        'requested_type' => 'premium',                                              // Which level (free, city, premium) of CCFD to use
+        'emailMD5' => md5($data['account_lid']),                                    // CreditCardFraudDetection.php will take
+        'usernameMD5' => md5($data['account_lid']),                                 // MD5 hash of e-mail address passed to emailMD5 if it detects '@' in the string
+        'passwordMD5' => $md5_passwd,
+        'sessionID' => $GLOBALS['tf']->session->sessionid,                          // Session ID
+        'i' => $ip === false ? \MyAdmin\Session::get_client_ip() : $ip,
+        'forwardedIP' => $ip === false ? \MyAdmin\Session::get_client_ip() : $ip,   // X-Forwarded-For or Client-IP HTTP Header
+        'domain' => mb_substr($data['account_lid'], mb_strpos($data['account_lid'], '@') + 1),
+        'license_key' => MAXMIND_LICENSE_KEY,
+        'country' => 'US',
+    ];
+    foreach ($fields as $myField => $reqField)
+        if (isset($ccData[$myField]) && trim($ccData[$myField]) != '')
+            $request[$reqField] = $ccData[$myField];
+        elseif (in_array($myField, $requiredFields))
             $good = false;
-        }
-    }
-    if (!isset($data['country']) || trim($data['country']) == '') {
-        $data['country'] = 'US';
-        $new_data['country'] = 'US';
-    }
     if ($good === false) {
-        myadmin_log('maxmind', 'notice', "update_maxmind({$customer}, {$module}) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
+        myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
         $new_data['disable_cc'] = 1;
         $new_data['payment_method'] = 'paypal';
+        $GLOBALS['tf']->accounts->update($custid, $new_data);
+        return false;
+    }
+    if (isset($ccData['cc']) && $GLOBALS['tf']->decrypt($ccData['cc']) != '') {
+        $request['bin'] = mb_substr($GLOBALS['tf']->decrypt($ccData['cc']), 0, 6); // bank identification number
+    }
+    if ($ip !== false) {
+
+    }
+    myadmin_log('maxmind', 'info', "update_maxmind({$custid}, {$ip}) Called with ".json_encode($request), __LINE__, __FILE__);
+    \StatisticClient::tick('MaxMind', 'MinFraudLookup');
+    $ccfs = new CreditCardFraudDetection();
+    $ccfs->isSecure = 1;
+    $ccfs->timeout = 20; //set the time out to be five seconds
+    // $ccfs->debug = 1; //uncomment to turn on debugging
+    $ccfs->input($request); //next we pass the input hash to the server
+    $ccfs->query();
+    $response = $ccfs->output();
+    if (is_array($response) & isset($response['riskScore'])) {
+        \StatisticClient::report('MaxMind', 'MinFraudLookup', true, 0, '', STATISTICS_SERVER);
     } else {
-        $ccfs = new CreditCardFraudDetection();
-        $request['license_key'] = MAXMIND_LICENSE_KEY;
-        // Required fields
-        if ($ip === false) {
-            $request['i'] = \MyAdmin\Session::get_client_ip();
-        } else {
-            $request['i'] = $ip;
-        }
-        if (isset($data['city']) && trim($data['city']) != '') {
-            $request['city'] = $data['city'];
-        } // set the billing city
-        if (isset($data['state']) && trim($data['state']) != '') {
-            $request['region'] = $data['state'];
-        } // set the billing state
-        if (isset($data['zip']) && trim($data['zip']) != '') {
-            $request['postal'] = $data['zip'];
-        } // set the billing zip code
-        if (isset($data['country']) && trim($data['country']) != '') {
-            $request['country'] = $data['country'];
-        } // set the billing country
-        // Recommended fields
-        $request['domain'] = mb_substr($data['account_lid'], mb_strpos($data['account_lid'], '@') + 1);
-        if (isset($data['cc']) && $GLOBALS['tf']->decrypt($data['cc']) != '') {
-            $request['bin'] = mb_substr($GLOBALS['tf']->decrypt($data['cc']), 0, 6);
-        } // bank identification number
-        if ($ip !== false) {
-            $request['forwardedIP'] = $ip;
-        } // X-Forwarded-For or Client-IP HTTP Header
-        if (isset($data['phone'])) {
-            $request['custPhone'] = $data['phone'];
-        } // Area-code and local prefix of customer phone number
-        // Optional fields
-        $request['requested_type'] = 'premium'; // Which level (free, city, premium) of CCFD to use
-        $request['emailMD5'] = $md5_login; // CreditCardFraudDetection.php will take
-        // MD5 hash of e-mail address passed to emailMD5 if it detects '@' in the string
-        //$request['shipAddr'] = $data['address']; // Shipping Address
-        $request['usernameMD5'] = $md5_login;
-        $request['passwordMD5'] = $md5_passwd;
-        //$request['txnID'] = "1234";         // Transaction ID
-        $request['sessionID'] = $GLOBALS['tf']->session->sessionid;     // Session ID
-        $ccfs->isSecure = 1;
-        //set the time out to be five seconds
-        $ccfs->timeout = 20;
-        //uncomment to turn on debugging
-        // $ccfs->debug = 1;
-        //next we pass the input hash to the server
-
-        myadmin_log('maxmind', 'info', "update_maxmind({$customer}, {$module}) Called", __LINE__, __FILE__);
-        myadmin_log('maxmind', 'debug', json_encode($request), __LINE__, __FILE__);
-        \StatisticClient::tick('MaxMind', 'MinFraudLookup');
-        $ccfs->input($request);
-        $ccfs->query();
-        $response = $ccfs->output();
-        if (is_array($response) & isset($response['riskScore'])) {
-            \StatisticClient::report('MaxMind', 'MinFraudLookup', true, 0, '', STATISTICS_SERVER);
-        } else {
-            \StatisticClient::report('MaxMind', 'MinFraudLookup', false, 100, 'Invalid Response', STATISTICS_SERVER);
-        }
-        if (isset($data['country']) && in_array(strtolower($data['country']), ['br', 'tw'])) {
-            if (isset($response['score']) && $response['score'] < MAXMIND_COUNTRY_SCORE_LIMIT) {
-                $response['score'] += MAXMIND_COUNTRY_SCORE_PENALTY;
-            }
-            if (isset($response['riskScore']) && $response['riskScore'] <= MAXMIND_COUNTRY_RISKSCORE_LIMIT) {
-                $response['riskScore'] += MAXMIND_COUNTRY_SCORE_PENALTY;
-            }
-        }
-        if (isset($data['name'])) {
-            $nparts = explode(' ', $data['name']);
-            $first_name = strtolower($nparts[0]);
-            include_once __DIR__.'/../../../../include/config/female_names.inc.php';
-            if (in_array($first_name, $female_names)) {
-                $response['female_name'] = 'yes';
+        \StatisticClient::report('MaxMind', 'MinFraudLookup', false, 100, 'Invalid Response', STATISTICS_SERVER);
+    }
+    if (isset($ccData['country']) && in_array(strtolower($ccData['country']), ['br', 'tw'])) {
+        if (isset($response['score']) && $response['score'] < MAXMIND_COUNTRY_SCORE_LIMIT)
+            $response['score'] += MAXMIND_COUNTRY_SCORE_PENALTY;
+        if (isset($response['riskScore']) && $response['riskScore'] <= MAXMIND_COUNTRY_RISKSCORE_LIMIT)
+            $response['riskScore'] += MAXMIND_COUNTRY_SCORE_PENALTY;
+    }
+    if (isset($ccData['name'])) {
+        $nparts = explode(' ', $ccData['name']);
+        $first_name = strtolower($nparts[0]);
+        include_once __DIR__.'/../../../../include/config/female_names.inc.php';
+        if (in_array($first_name, $female_names)) {
+            $response['female_name'] = 'yes';
+            if (isset($response['score']))
+                $response['score'] = trim($response['score']);
+            if (MAXMIND_FEMALE_PENALTY_ENABLE == true && ((isset($response['score']) && $response['score'] < MAXMIND_FEMALE_SCORE_LIMIT) || $response['riskScore'] < MAXMIND_FEMALE_RISKSCORE_LIMIT)) {
                 if (isset($response['score'])) {
-                    $response['score'] = trim($response['score']);
+                    $response['original_score'] = $response['score'];
+                    $response['score'] += MAXMIND_FEMALE_SCORE_PENALTY;
                 }
-                if (MAXMIND_FEMALE_PENALTY_ENABLE == true && ((isset($response['score']) && $response['score'] < MAXMIND_FEMALE_SCORE_LIMIT) || $response['riskScore'] < MAXMIND_FEMALE_RISKSCORE_LIMIT)) {
-                    if (isset($response['score'])) {
-                        $response['original_score'] = $response['score'];
-                        $response['score'] += MAXMIND_FEMALE_SCORE_PENALTY;
-                    }
-                    $response['original_riskScore'] = $response['riskScore'];
-                    $response['riskScore'] += MAXMIND_FEMALE_RISKSCORE_PENALTY;
-                    if (isset($response['explanation'])) {
-                        $response['explanation'] = trim($response['explanation']).' The user has a female first name, as per request, that means + '.MAXMIND_FEMALE_SCORE_PENALTY.' to fraud score';
-                    }
-                }
-            } else {
-                $response['female_name'] = 'no';
+                $response['original_riskScore'] = $response['riskScore'];
+                $response['riskScore'] += MAXMIND_FEMALE_RISKSCORE_PENALTY;
+                if (isset($response['explanation']))
+                    $response['explanation'] = trim($response['explanation']).' The user has a female first name, as per request, that means + '.MAXMIND_FEMALE_SCORE_PENALTY.' to fraud score';
             }
-        } else {
+        } else
             $response['female_name'] = 'no';
-        }
-        /*
-        $db->query("select * from invoices where invoices_paid=1 and invoices_custid={$customer}");
-        if ($db->num_rows() > 2) {
-            if (isset($response['score']))
-                $response['score'] -= 3;
-            $response['riskScore'] -= 30;
-            if (isset($response['score']))
-                if ($response['score'] <= 0)
-                    $response['score'] = 0;
-            if ($response['riskScore'] <= 0)
-                $response['riskScore'] = 0;
-        }
-        */
-        $distance_penalty = floor(floatval($response['distance']) / 100);
-        $distance_penalty = $distance_penalty > 50 ? 50 : $distance_penalty;
-        myadmin_log('maxmind', 'info', 'Distance is '.$response['distance'].' or +'.$distance_penalty.' to riskScore (previously '.$response['riskScore'].')', __LINE__, __FILE__);
-        $response['riskScore'] += $distance_penalty;
-
+    } else
+        $response['female_name'] = 'no';
+    $distance_penalty = floor(floatval($response['distance']) / 100);
+    $distance_penalty = $distance_penalty > 50 ? 50 : $distance_penalty;
+    myadmin_log('maxmind', 'info', 'Distance is '.$response['distance'].' or +'.$distance_penalty.' to riskScore (previously '.$response['riskScore'].')', __LINE__, __FILE__);
+    $response['riskScore'] += $distance_penalty;
+    $json = @json_encode($response);
+    if (json_last_error() === JSON_ERROR_UTF8) { // Detect UTF8 encoding errors and attempt to automatically recover the data
+        foreach ($response as $key => $value)
+            $response[$key] = \ForceUTF8\Encoding::fixUTF8($value);
         $json = @json_encode($response);
-        // Detect UTF8 encoding errors and attempt to automatically recover the data
-        if (json_last_error() === JSON_ERROR_UTF8) {
-            foreach ($response as $key => $value) {
-                $response[$key] = \ForceUTF8\Encoding::fixUTF8($value);
-            }
-            $json = @json_encode($response);
-        }
-        $new_data = [];
-        $smarty = new TFSmarty();
-        $smarty->assign('account_id', $customer);
-        $smarty->assign('account_lid', $GLOBALS['tf']->accounts->cross_reference($customer));
-        $smarty->assign('fraudArray', $response);
-        $email = $smarty->fetch('email/admin/fraud.tpl');
+    }
+    $smarty = new TFSmarty();
+    $smarty->assign('account_id', $custid);
+    $smarty->assign('account_lid', $GLOBALS['tf']->accounts->cross_reference($custid));
+    $smarty->assign('fraudArray', $response);
+    $email = $smarty->fetch('email/admin/fraud.tpl');
+    if ($ccIdx !== false) {
+        $ccs[$ccIdx]['maxmind_riskscore'] = trim($response['riskScore']);
+        if (isset($response['score']))
+            $ccs[$ccIdx]['maxmind_score'] = trim($response['score']);
+        $ccs[$ccIdx]['maxmind'] = $json;
+        $new_data['ccs'] = json_encode($ccs);
+    } else {
         $new_data['maxmind_riskscore'] = trim($response['riskScore']);
-        if (isset($response['score'])) {
+        if (isset($response['score']))
             $new_data['maxmind_score'] = trim($response['score']);
-        }
         $new_data['maxmind'] = $json;
-        myadmin_log('maxmind', 'notice', 'Maxmind '.(isset($response['score']) ? 'Score: '.$response['score'] : '').' riskScore: '.$response['riskScore'], __LINE__, __FILE__);
-        myadmin_log('maxmind', 'debug', $new_data['maxmind'], __LINE__, __FILE__);
-        if ((MAXMIND_CARDER_LOCK == true && isset($response['carderEmail']) && $response['carderEmail'] == 'Yes') || (isset($response['score']) && $response['score'] >= MAXMIND_SCORE_LOCK) || $response['riskScore'] >= MAXMIND_RISKSCORE_LOCK) {
-            $db->query("select * from invoices where invoices_type=1 and invoices_paid=1 and invoices_custid={$customer} and invoices_date <= date_sub(now(), INTERVAL 1 DAY) limit 1", __LINE__, __FILE__);
-            if ($db->num_rows() == 0) {
-                myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) Carder Email Or High Score From Customer {$customer} (".(isset($response['score']) ? 'Score: '.$response['score'] : '')." RiskScore {$response['riskScore']}), Disabling Account", __LINE__, __FILE__);
-                function_requirements('disable_account');
-                disable_account($customer, $module);
-            } else {
-                myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) Carder Email Or High Score From Customer {$customer} (".(isset($response['score']) ? 'Score: '.$response['score'] : '')." RiskScore {$response['riskScore']}), I would disable the account but they have old invoices", __LINE__, __FILE__);
-            }
-        }
-        if ((isset($response['score']) && $response['score'] >= MAXMIND_SCORE_DISABLE_CC) || $response['riskScore'] >= MAXMIND_RISKSCORE_DISABLE_CC || $response['proxyScore'] >= MAXMIND_PROXYSCORE_DISABLE_CC) {
-            myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? 'Score: '.$response['score']. ' >' . MAXMIND_SCORE_DISABLE_CC : ''). "   {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
-            $new_data['disable_cc'] = 1;
-            $new_data['payment_method'] = 'paypal';
-        }
-        if (MAXMIND_NORESPONSE_DISABLE_CC == true && (!isset($response['score']) || trim($response['score']) == '') && trim($response['riskScore']) == '') {
-            myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) BLANK Maxmind Score and Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__);
-            $new_data['disable_cc'] = 1;
-            $new_data['payment_method'] = 'paypal';
-            $subject = TITLE.' MISSING MaxMind Data - Possible Fraud';
-            (new \MyAdmin\Mail())->adminMail($subject, $email, false, 'admin/fraud.tpl');
-        }
-        if ((isset($response['score']) && $response['score'] > MAXMIND_POSSIBLE_FRAUD_SCORE) || $response['riskScore'] >= MAXMIND_POSSIBLE_FRAUD_SCORE) {
-            $subject = TITLE.' MaxMind Possible Fraud';
-            (new \MyAdmin\Mail())->adminMail($subject, $email, false, 'admin/fraud.tpl');
-            myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? $response['score']. ' >' . MAXMIND_POSSIBLE_FRAUD_SCORE : ''). " or  {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.',  Emailing Possible Fraud', __LINE__, __FILE__);
-        }
-        if ($response['queriesRemaining'] <= MAXMIND_QUERIES_REMAINING) {
-            $subject = 'MaxMind Down To '.$response['queriesRemaining'].' Queries Remaining';
-            myadmin_log('maxmind', 'warning', $subject, __LINE__, __FILE__);
-            (new \MyAdmin\Mail())->adminMail($subject, $subject, false, 'admin/maxmind_queries.tpl');
+    }
+    myadmin_log('maxmind', 'notice', 'Maxmind '.(isset($response['score']) ? 'Score: '.$response['score'] : '').' riskScore: '.$response['riskScore'].' '.$json, __LINE__, __FILE__);
+    if ((MAXMIND_CARDER_LOCK == true && isset($response['carderEmail']) && $response['carderEmail'] == 'Yes') || (isset($response['score']) && $response['score'] >= MAXMIND_SCORE_LOCK) || $response['riskScore'] >= MAXMIND_RISKSCORE_LOCK) {
+        $db->query("select * from invoices where invoices_type=1 and invoices_paid=1 and invoices_custid={$custid} and invoices_date <= date_sub(now(), INTERVAL 1 DAY) limit 1", __LINE__, __FILE__);
+        if ($db->num_rows() == 0) {
+            myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) Carder Email Or High Score From Customer {$custid} (".(isset($response['score']) ? 'Score: '.$response['score'] : '')." RiskScore {$response['riskScore']}), Disabling Account", __LINE__, __FILE__);
+            function_requirements('disable_account');
+            disable_account($custid);
+        } else {
+            myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) Carder Email Or High Score From Customer {$custid} (".(isset($response['score']) ? 'Score: '.$response['score'] : '')." RiskScore {$response['riskScore']}), I would disable the account but they have old invoices", __LINE__, __FILE__);
         }
     }
-    $GLOBALS['tf']->accounts->update($customer, $new_data);
+    if ((isset($response['score']) && $response['score'] >= MAXMIND_SCORE_DISABLE_CC) || $response['riskScore'] >= MAXMIND_RISKSCORE_DISABLE_CC || $response['proxyScore'] >= MAXMIND_PROXYSCORE_DISABLE_CC) {
+        myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) ".(isset($response['score']) ? 'Score: '.$response['score']. ' >' . MAXMIND_SCORE_DISABLE_CC : ''). "   {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
+        $new_data['disable_cc'] = 1;
+        $new_data['payment_method'] = 'paypal';
+    }
+    if (MAXMIND_NORESPONSE_DISABLE_CC == true && (!isset($response['score']) || trim($response['score']) == '') && trim($response['riskScore']) == '') {
+        myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) BLANK Maxmind Score and Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__);
+        $new_data['disable_cc'] = 1;
+        $new_data['payment_method'] = 'paypal';
+        $subject = TITLE.' MISSING MaxMind Data - Possible Fraud';
+        (new \MyAdmin\Mail())->adminMail($subject, $email, false, 'admin/fraud.tpl');
+    }
+    if ((isset($response['score']) && $response['score'] > MAXMIND_POSSIBLE_FRAUD_SCORE) || $response['riskScore'] >= MAXMIND_POSSIBLE_FRAUD_SCORE) {
+        $subject = TITLE.' MaxMind Possible Fraud';
+        (new \MyAdmin\Mail())->adminMail($subject, $email, false, 'admin/fraud.tpl');
+        myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) ".(isset($response['score']) ? $response['score']. ' >' . MAXMIND_POSSIBLE_FRAUD_SCORE : ''). " or  {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.',  Emailing Possible Fraud', __LINE__, __FILE__);
+    }
+    if ($response['queriesRemaining'] <= MAXMIND_QUERIES_REMAINING) {
+        $subject = 'MaxMind Down To '.$response['queriesRemaining'].' Queries Remaining';
+        myadmin_log('maxmind', 'warning', $subject, __LINE__, __FILE__);
+        (new \MyAdmin\Mail())->adminMail($subject, $subject, false, 'admin/maxmind_queries.tpl');
+    }
+    $GLOBALS['tf']->accounts->update($custid, $new_data);
     return true;
 }
 
@@ -377,7 +340,7 @@ function update_maxmind_noaccount($data)
         $data['country'] = 'US';
     }
     if ($good === false) {
-        myadmin_log('maxmind', 'notice', "update_maxmind($customer, $module) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
+        myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
         $data['disable_cc'] = 1;
         $data['payment_method'] = 'paypal';
     } else {
@@ -419,7 +382,7 @@ function update_maxmind_noaccount($data)
         //uncomment to turn on debugging
         // $ccfs->debug = 1;
         //next we pass the input hash to the server
-        myadmin_log('maxmind', 'debug', "update_maxmind({$customer}, {$module}) Calling With Arguments: " . json_encode($request), __LINE__, __FILE__);
+        myadmin_log('maxmind', 'debug', "update_maxmind({$custid}, {$ip}) Calling With Arguments: " . json_encode($request), __LINE__, __FILE__);
         \StatisticClient::tick('MaxMind', 'MinFraudLookup');
         $ccfs->input($request);
         $ccfs->query();
@@ -478,12 +441,12 @@ function update_maxmind_noaccount($data)
                 $data['status'] = 'locked';
             }
             if ((isset($response['score']) && $response['score'] >= MAXMIND_SCORE_DISABLE_CC) || $response['riskScore'] >= MAXMIND_RISKSCORE_DISABLE_CC || $response['proxyScore'] >= MAXMIND_PROXYSCORE_DISABLE_CC) {
-                myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) ".(isset($response['score']) ? "{$response['score']} >= " . MAXMIND_SCORE_DISABLE_CC : ''). " or  {$response['riskScore']} >= " . MAXMIND_RISKSCORE_DISABLE_CC.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
+                myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) ".(isset($response['score']) ? "{$response['score']} >= " . MAXMIND_SCORE_DISABLE_CC : ''). " or  {$response['riskScore']} >= " . MAXMIND_RISKSCORE_DISABLE_CC.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
                 $data['disable_cc'] = 1;
                 $data['payment_method'] = 'paypal';
             }
             if (MAXMIND_NORESPONSE_DISABLE_CC == true && (!isset($response['score']) && trim($response['score']) == '') && trim($response['riskScore']) == '') {
-                myadmin_log('maxmind', 'warning', "update_maxmind({$customer}, {$module}) BLANK Maxmind Score and BLANK MaxMind Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__, $module);
+                myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) BLANK Maxmind Score and BLANK MaxMind Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__);
                 $data['disable_cc'] = 1;
                 $data['payment_method'] = 'paypal';
             }
