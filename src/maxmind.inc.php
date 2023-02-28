@@ -170,13 +170,15 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
     function_requirements('parse_ccs');
     $ccs = parse_ccs($data);
     $ccData = $ccIdx !== false ? $ccs[$ccIdx] : $data;
-    if (isset($data['cc_whitelist']) && $data['cc_whitelist'] == 1) { // skip maxmind if whitelisted
-        return true;
-    }
-    $db->query("select * from access_log where access_owner={$custid} and access_login <= date_sub(now(), INTERVAL 1 YEAR) limit 1", __LINE__, __FILE__);
-    if ($db->num_rows() > 0) { // skip maxmind if account is older than a year
-        myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) customer is older than a year old, Skipping Updating Maxmind", __LINE__, __FILE__);
-        return true;
+    if ($ccIdx === false) {
+        if (isset($data['cc_whitelist']) && $data['cc_whitelist'] == 1) { // skip maxmind if whitelisted
+            return true;
+        }
+        $db->query("select * from access_log where access_owner={$custid} and access_login <= date_sub(now(), INTERVAL 1 YEAR) limit 1", __LINE__, __FILE__);
+        if ($db->num_rows() > 0) { // skip maxmind if account is older than a year
+            myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) customer is older than a year old, Skipping Updating Maxmind", __LINE__, __FILE__);
+            return true;
+        }
     }
     $db->query("select account_passwd from accounts where account_id={$custid}", __LINE__, __FILE__);
     $db->next_record(MYSQL_ASSOC);
@@ -269,7 +271,7 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         $ccs[$ccIdx]['maxmind_riskscore'] = trim($response['riskScore']);
         if (isset($response['score']))
             $ccs[$ccIdx]['maxmind_score'] = trim($response['score']);
-        $ccs[$ccIdx]['maxmind'] = $json;
+        $ccs[$ccIdx]['maxmind'] = $response;
         $new_data['ccs'] = json_encode($ccs);
     } else {
         $new_data['maxmind_riskscore'] = trim($response['riskScore']);
