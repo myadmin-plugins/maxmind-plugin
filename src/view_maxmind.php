@@ -36,9 +36,18 @@
             $customer = $GLOBALS['tf']->accounts->cross_reference($lid);
             $data = $GLOBALS['tf']->accounts->read($customer);
         }
+        if (isset($GLOBALS['tf']->variables->request['cc_idx'])) {
+            $cc_idx = $GLOBALS['tf']->variables->request['cc_idx'];
+            function_requirements('parse_ccs');
+            $ccs = parse_ccs($data);
+            $cc = $ccs[$cc_idx];
+            $maxmind = $cc['maxmind'];
+        } else {
+            $maxmind = myadmin_unstringify($data['maxmind']);
+        }
         $table = new TFTable();
         $table->set_title('Maxmind Output');
-        $maxmind = myadmin_unstringify($data['maxmind']);
+
         if (!is_array($maxmind)) {
             $maxmind = myadmin_unstringify(stripslashes($data['maxmind']));
         }
