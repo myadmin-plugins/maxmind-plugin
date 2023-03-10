@@ -233,7 +233,8 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
     if (isset($ccData['name'])) {
         $nparts = explode(' ', $ccData['name']);
         $first_name = strtolower($nparts[0]);
-        include_once __DIR__.'/../../../../include/config/female_names.inc.php';
+        global $female_names;
+        include_once __DIR__.'/female_names.inc.php';
         if (in_array($first_name, $female_names)) {
             $response['female_name'] = 'yes';
             if (isset($response['score']))
@@ -401,7 +402,8 @@ function update_maxmind_noaccount($data)
             if (isset($data['name'])) {
                 $nparts = explode(' ', $data['name']);
                 $first_name = $nparts[0];
-                include_once __DIR__.'/../../../../include/config/female_names.inc.php';
+                global $female_names;
+                include_once __DIR__.'/female_names.inc.php';
                 if (in_array($first_name, $female_names)) {
                     $response['female_name'] = 'yes';
                     if (isset($response['score'])) {
