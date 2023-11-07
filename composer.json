@@ -15,15 +15,18 @@
 		}
 	],
 	"config": {
-		"bin-dir": "vendor\/bin"
+		"bin-dir": "vendor\/bin",
+		"allow-plugins": {
+			"detain/myadmin-plugin-installer": true
+		}
 	},
 	"require": {
 		"php": ">=5.0.0",
 		"ext-curl": "*",
 		"symfony/event-dispatcher": "^5.0@stable",
 		"detain/myadmin-plugin-installer": "dev-master",
-		"maxmind/minfraud": "dev-main",
-		"minfraud/http": "dev-main"
+		"maxmind/minfraud": "*",
+		"minfraud/http": "*"
     },
 	"require-dev": {
 		"phpunit/phpunit": "*",
