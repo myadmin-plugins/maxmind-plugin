@@ -26,7 +26,7 @@
         add_js('bootstrap');
         add_js('isotope');
         $customer = $GLOBALS['tf']->variables->request['customer'];
-        $module = get_module_name((isset($GLOBALS['tf']->variables->request['module']) ? $GLOBALS['tf']->variables->request['module'] : 'default'));
+        $module = get_module_name(($GLOBALS['tf']->variables->request['module'] ?? 'default'));
         $data = $GLOBALS['tf']->accounts->read($customer);
         function_requirements('get_maxmind_field_descriptions');
         $fields = get_maxmind_field_descriptions();
