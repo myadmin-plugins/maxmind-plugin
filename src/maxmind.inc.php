@@ -195,11 +195,13 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         'license_key' => MAXMIND_LICENSE_KEY,
         'country' => 'US',
     ];
-    foreach ($fields as $myField => $reqField)
-        if (isset($ccData[$myField]) && trim($ccData[$myField]) != '')
+    foreach ($fields as $myField => $reqField) {
+        if (isset($ccData[$myField]) && trim($ccData[$myField]) != '') {
             $request[$reqField] = $ccData[$myField];
-        elseif (in_array($myField, $requiredFields))
+        } elseif (in_array($myField, $requiredFields)) {
             $good = false;
+        }
+    }
     if ($good === false) {
         myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
         $new_data['disable_cc'] = 1;
@@ -225,10 +227,12 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         \StatisticClient::report('MaxMind', 'MinFraudLookup', false, 100, 'Invalid Response', STATISTICS_SERVER);
     }
     if (isset($ccData['country']) && in_array(strtolower($ccData['country']), ['br', 'tw'])) {
-        if (isset($response['score']) && $response['score'] < MAXMIND_COUNTRY_SCORE_LIMIT)
+        if (isset($response['score']) && $response['score'] < MAXMIND_COUNTRY_SCORE_LIMIT) {
             $response['score'] += MAXMIND_COUNTRY_SCORE_PENALTY;
-        if (isset($response['riskScore']) && $response['riskScore'] <= MAXMIND_COUNTRY_RISKSCORE_LIMIT)
+        }
+        if (isset($response['riskScore']) && $response['riskScore'] <= MAXMIND_COUNTRY_RISKSCORE_LIMIT) {
             $response['riskScore'] += MAXMIND_COUNTRY_SCORE_PENALTY;
+        }
     }
     if (isset($ccData['name'])) {
         $nparts = explode(' ', $ccData['name']);
@@ -237,8 +241,9 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         include_once __DIR__.'/female_names.inc.php';
         if (in_array($first_name, $female_names)) {
             $response['female_name'] = 'yes';
-            if (isset($response['score']))
+            if (isset($response['score'])) {
                 $response['score'] = trim($response['score']);
+            }
             if (MAXMIND_FEMALE_PENALTY_ENABLE == true && ((isset($response['score']) && $response['score'] < MAXMIND_FEMALE_SCORE_LIMIT) || $response['riskScore'] < MAXMIND_FEMALE_RISKSCORE_LIMIT)) {
                 if (isset($response['score'])) {
                     $response['original_score'] = $response['score'];
@@ -246,21 +251,25 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
                 }
                 $response['original_riskScore'] = $response['riskScore'];
                 $response['riskScore'] += MAXMIND_FEMALE_RISKSCORE_PENALTY;
-                if (isset($response['explanation']))
+                if (isset($response['explanation'])) {
                     $response['explanation'] = trim($response['explanation']).' The user has a female first name, as per request, that means + '.MAXMIND_FEMALE_SCORE_PENALTY.' to fraud score';
+                }
             }
-        } else
+        } else {
             $response['female_name'] = 'no';
-    } else
+        }
+    } else {
         $response['female_name'] = 'no';
+    }
     $distance_penalty = floor(floatval($response['distance']) / 100);
     $distance_penalty = $distance_penalty > 50 ? 50 : $distance_penalty;
     myadmin_log('maxmind', 'info', 'Distance is '.$response['distance'].' or +'.$distance_penalty.' to riskScore (previously '.$response['riskScore'].')', __LINE__, __FILE__);
     $response['riskScore'] += $distance_penalty;
     $json = @json_encode($response);
     if (json_last_error() === JSON_ERROR_UTF8) { // Detect UTF8 encoding errors and attempt to automatically recover the data
-        foreach ($response as $key => $value)
+        foreach ($response as $key => $value) {
             $response[$key] = \ForceUTF8\Encoding::fixUTF8($value);
+        }
         $json = @json_encode($response);
     }
     $smarty = new TFSmarty();
@@ -270,14 +279,16 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
     $email = $smarty->fetch('email/admin/fraud.tpl');
     if ($ccIdx !== false) {
         $ccs[$ccIdx]['maxmind_riskscore'] = trim($response['riskScore']);
-        if (isset($response['score']))
+        if (isset($response['score'])) {
             $ccs[$ccIdx]['maxmind_score'] = trim($response['score']);
+        }
         $ccs[$ccIdx]['maxmind'] = $response;
         $new_data['ccs'] = json_encode($ccs);
     } else {
         $new_data['maxmind_riskscore'] = trim($response['riskScore']);
-        if (isset($response['score']))
+        if (isset($response['score'])) {
             $new_data['maxmind_score'] = trim($response['score']);
+        }
         $new_data['maxmind'] = $json;
     }
     myadmin_log('maxmind', 'notice', 'Maxmind '.(isset($response['score']) ? 'Score: '.$response['score'] : '').' riskScore: '.$response['riskScore'].' '.$json, __LINE__, __FILE__);
