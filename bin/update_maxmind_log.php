@@ -7,7 +7,7 @@
 * @author Joe Huss <detain@interserver.net>
 * @package MyAdmin
 * @category wipe_vps
-* @copyright 2020
+* @copyright 2025
 */
 
 
