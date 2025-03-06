@@ -26,7 +26,7 @@
 		"symfony/event-dispatcher": "^5.0@stable",
 		"detain/myadmin-plugin-installer": "dev-master",
 		"maxmind/minfraud": "*",
-		"minfraud/http": "dev-main"
+		"minfraud/http": "*"
     },
 	"require-dev": {
 		"phpunit/phpunit": "*",
