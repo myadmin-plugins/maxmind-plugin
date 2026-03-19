@@ -31,7 +31,9 @@
 
 use ForceUTF8\Encoding;
 
-require_once __DIR__.'/../../../workerman/statistics/Applications/Statistics/Clients/StatisticClient.php';
+if (is_file(__DIR__.'/../../../workerman/statistics/Applications/Statistics/Clients/StatisticClient.php')) {
+    require_once __DIR__.'/../../../workerman/statistics/Applications/Statistics/Clients/StatisticClient.php';
+}
 
 /**
  * decodes stored maxmind data
@@ -213,7 +215,9 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         $request['bin'] = mb_substr($GLOBALS['tf']->decrypt($ccData['cc']), 0, 6); // bank identification number
     }
     myadmin_log('maxmind', 'info', "update_maxmind({$custid}, {$ip}) Called with ".json_encode($request), __LINE__, __FILE__);
-    \StatisticClient::tick('MaxMind', 'MinFraudLookup');
+    if (class_exists(\StatisticClient::class, false)) {
+        \StatisticClient::tick('MaxMind', 'MinFraudLookup');
+    }
     $ccfs = new CreditCardFraudDetection();
     $ccfs->isSecure = 1;
     $ccfs->timeout = 20; //set the time out to be five seconds
@@ -222,9 +226,13 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
     $ccfs->query();
     $response = $ccfs->output();
     if (is_array($response) & isset($response['riskScore'])) {
-        \StatisticClient::report('MaxMind', 'MinFraudLookup', true, 0, '', STATISTICS_SERVER);
+        if (class_exists(\StatisticClient::class, false)) {
+            \StatisticClient::report('MaxMind', 'MinFraudLookup', true, 0, '', STATISTICS_SERVER);
+        }
     } else {
-        \StatisticClient::report('MaxMind', 'MinFraudLookup', false, 100, 'Invalid Response', STATISTICS_SERVER);
+        if (class_exists(\StatisticClient::class, false)) {
+            \StatisticClient::report('MaxMind', 'MinFraudLookup', false, 100, 'Invalid Response', STATISTICS_SERVER);
+        }
     }
     if (isset($ccData['country']) && in_array(strtolower($ccData['country']), ['br', 'tw'])) {
         if (isset($response['score']) && $response['score'] < MAXMIND_COUNTRY_SCORE_LIMIT) {
@@ -394,14 +402,20 @@ function update_maxmind_noaccount($data)
         // $ccfs->debug = 1;
         //next we pass the input hash to the server
         myadmin_log('maxmind', 'debug', "update_maxmind({$custid}, {$ip}) Calling With Arguments: " . json_encode($request), __LINE__, __FILE__);
-        \StatisticClient::tick('MaxMind', 'MinFraudLookup');
+        if (class_exists(\StatisticClient::class, false)) {
+            \StatisticClient::tick('MaxMind', 'MinFraudLookup');
+        }
         $ccfs->input($request);
         $ccfs->query();
         $response = $ccfs->output();
         if (is_array($response) & isset($response['riskScore'])) {
-            \StatisticClient::report('MaxMind', 'MinFraudLookup', true, 0, '', STATISTICS_SERVER);
+            if (class_exists(\StatisticClient::class, false)) {
+                \StatisticClient::report('MaxMind', 'MinFraudLookup', true, 0, '', STATISTICS_SERVER);
+            }
         } else {
-            \StatisticClient::report('MaxMind', 'MinFraudLookup', false, 100, 'Invalid Response', STATISTICS_SERVER);
+            if (class_exists(\StatisticClient::class, false)) {
+                \StatisticClient::report('MaxMind', 'MinFraudLookup', false, 100, 'Invalid Response', STATISTICS_SERVER);
+            }
         }
         if (isset($data['country']) && in_array(strtolower($data['country']), ['br', 'tw'])) {
             if (isset($response['score']) && $response['score'] < MAXMIND_COUNTRY_SCORE_LIMIT) {
