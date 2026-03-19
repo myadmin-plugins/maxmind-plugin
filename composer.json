@@ -29,16 +29,16 @@
 		"minfraud/http": "*"
     },
 	"require-dev": {
-		"phpunit/phpunit": "*",
-		"phpunit/phpunit-mock-objects": "*",
-		"vlucas/phpdotenv": "*",
-		"codeclimate/php-test-reporter": "*",
-		"satooshi/php-coveralls": "*",
-		"codacy/coverage": "*"
+		"phpunit/phpunit": "^9.6"
 	},
 	"autoload": {
 		"psr-4": {
 			"Detain\\MyAdminMaxMind\\": "src/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"Detain\\MyAdminMaxMind\\Tests\\": "tests/"
 		}
 	},
 	"repositories": [

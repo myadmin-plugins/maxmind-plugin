@@ -1,28 +1,47 @@
-# MaxMind handling plugin for MyAdmin
+# MyAdmin MaxMind Plugin
 
-MaxMind handling plugin for MyAdmin
+A MaxMind integration plugin for the MyAdmin control panel that provides fraud detection, risk scoring, and chargeback reporting capabilities using the MaxMind minFraud service.
 
-## Build Status and Code Analysis
+[![Build Status](https://github.com/detain/myadmin-maxmind-plugin/actions/workflows/tests.yml/badge.svg)](https://github.com/detain/myadmin-maxmind-plugin/actions/workflows/tests.yml)
+[![Latest Stable Version](https://poser.pugx.org/detain/myadmin-maxmind-plugin/version)](https://packagist.org/packages/detain/myadmin-maxmind-plugin)
+[![Total Downloads](https://poser.pugx.org/detain/myadmin-maxmind-plugin/downloads)](https://packagist.org/packages/detain/myadmin-maxmind-plugin)
+[![License](https://poser.pugx.org/detain/myadmin-maxmind-plugin/license)](https://packagist.org/packages/detain/myadmin-maxmind-plugin)
 
-Site          | Status
---------------|---------------------------
-![Travis-CI](http://i.is.cc/storage/GYd75qN.png "Travis-CI")     | [![Build Status](https://travis-ci.org/detain/myadmin-maxmind-plugin.svg?branch=master)](https://travis-ci.org/detain/myadmin-maxmind-plugin)
-![CodeClimate](http://i.is.cc/storage/GYlageh.png "CodeClimate")  | [![Code Climate](https://codeclimate.com/github/detain/myadmin-maxmind-plugin/badges/gpa.svg)](https://codeclimate.com/github/detain/myadmin-maxmind-plugin) [![Test Coverage](https://codeclimate.com/github/detain/myadmin-maxmind-plugin/badges/coverage.svg)](https://codeclimate.com/github/detain/myadmin-maxmind-plugin/coverage) [![Issue Count](https://codeclimate.com/github/detain/myadmin-maxmind-plugin/badges/issue_count.svg)](https://codeclimate.com/github/detain/myadmin-maxmind-plugin)
-![Scrutinizer](http://i.is.cc/storage/GYeUnux.png "Scrutinizer")   | [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/myadmin-plugins/maxmind-plugin/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/myadmin-plugins/maxmind-plugin/?branch=master) [![Code Coverage](https://scrutinizer-ci.com/g/myadmin-plugins/maxmind-plugin/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/myadmin-plugins/maxmind-plugin/?branch=master) [![Build Status](https://scrutinizer-ci.com/g/myadmin-plugins/maxmind-plugin/badges/build.png?b=master)](https://scrutinizer-ci.com/g/myadmin-plugins/maxmind-plugin/build-status/master)
-![Codacy](http://i.is.cc/storage/GYi66Cx.png "Codacy")        | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/226251fc068f4fd5b4b4ef9a40011d06)](https://www.codacy.com/app/detain/myadmin-maxmind-plugin) [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/25fa74eb74c947bf969602fcfe87e349)](https://www.codacy.com/app/detain/myadmin-maxmind-plugin?utm_source=github.com&utm_medium=referral&utm_content=detain/myadmin-maxmind-plugin&utm_campaign=Badge_Coverage)
-![Coveralls](http://i.is.cc/storage/GYjNSim.png "Coveralls")    | [![Coverage Status](https://coveralls.io/repos/github/detain/db_abstraction/badge.svg?branch=master)](https://coveralls.io/github/detain/myadmin-maxmind-plugin?branch=master)
-![Packagist](http://i.is.cc/storage/GYacBEX.png "Packagist")     | [![Latest Stable Version](https://poser.pugx.org/detain/myadmin-maxmind-plugin/version)](https://packagist.org/packages/detain/myadmin-maxmind-plugin) [![Total Downloads](https://poser.pugx.org/detain/myadmin-maxmind-plugin/downloads)](https://packagist.org/packages/detain/myadmin-maxmind-plugin) [![Latest Unstable Version](https://poser.pugx.org/detain/myadmin-maxmind-plugin/v/unstable)](//packagist.org/packages/detain/myadmin-maxmind-plugin) [![Monthly Downloads](https://poser.pugx.org/detain/myadmin-maxmind-plugin/d/monthly)](https://packagist.org/packages/detain/myadmin-maxmind-plugin) [![Daily Downloads](https://poser.pugx.org/detain/myadmin-maxmind-plugin/d/daily)](https://packagist.org/packages/detain/myadmin-maxmind-plugin) [![License](https://poser.pugx.org/detain/myadmin-maxmind-plugin/license)](https://packagist.org/packages/detain/myadmin-maxmind-plugin)
+## Features
 
+- Real-time fraud detection via the MaxMind minFraud API for new account registrations and credit card transactions
+- Configurable score thresholds for automatic account locking and credit card disabling
+- Country-based and female-name-based risk score penalty adjustments
+- Administrative UI for comparing MaxMind score and riskScore across accounts
+- Detailed MaxMind output viewer for individual account fraud reports
+- Support for both legacy minFraud (score) and modern minFraud (Insights/Factors) APIs
+- Event-driven plugin architecture using Symfony EventDispatcher
 
 ## Installation
 
-Install with composer like
+Install with Composer:
 
 ```sh
 composer require detain/myadmin-maxmind-plugin
 ```
 
+## Configuration
+
+The plugin registers configurable settings through the MyAdmin settings system under "Security & Fraud" > "MaxMind Fraud Detection". Key settings include:
+
+- **MaxMind User ID and License Key** for API authentication
+- **Score and riskScore thresholds** for account locking and CC disabling
+- **Female name and country penalties** with configurable cutoff limits
+- **Proxy score thresholds** and no-response handling
+- **Fraud reporting** and query-remaining alerts
+
+## Running Tests
+
+```sh
+composer install
+vendor/bin/phpunit
+```
+
 ## License
 
-The MaxMind handling plugin for MyAdmin class is licensed under the LGPL-v2.1 license.
-
+This package is licensed under the LGPL-2.1 license.
