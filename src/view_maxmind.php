@@ -19,25 +19,25 @@
         require_once __DIR__.'/maxmind.inc.php'; // This handles fraud protection
         page_title('MaxMind Credit Fraud Output');
         function_requirements('has_acl');
-        if ($GLOBALS['tf']->ima != 'admin' || !has_acl('view_customer')) {
+        if (\MyAdmin\App::ima() != 'admin' || !has_acl('view_customer')) {
             dialog('Not admin', 'Not Admin or you lack the permissions to view this page.');
             return false;
         }
         add_js('bootstrap');
         add_js('isotope');
-        $customer = $GLOBALS['tf']->variables->request['customer'];
-        $module = get_module_name(($GLOBALS['tf']->variables->request['module'] ?? 'default'));
-        $data = $GLOBALS['tf']->accounts->read($customer);
+        $customer = \MyAdmin\App::variables()->request['customer'];
+        $module = get_module_name((\MyAdmin\App::variables()->request['module'] ?? 'default'));
+        $data = \MyAdmin\App::accounts()->read($customer);
         function_requirements('get_maxmind_field_descriptions');
         $fields = get_maxmind_field_descriptions();
         if (!isset($data['maxmind'])) {
             $lid = $data['account_lid'];
             $module = get_module_name('default');
-            $customer = $GLOBALS['tf']->accounts->cross_reference($lid);
-            $data = $GLOBALS['tf']->accounts->read($customer);
+            $customer = \MyAdmin\App::accounts()->cross_reference($lid);
+            $data = \MyAdmin\App::accounts()->read($customer);
         }
-        if (isset($GLOBALS['tf']->variables->request['cc_idx'])) {
-            $cc_idx = $GLOBALS['tf']->variables->request['cc_idx'];
+        if (isset(\MyAdmin\App::variables()->request['cc_idx'])) {
+            $cc_idx = \MyAdmin\App::variables()->request['cc_idx'];
             function_requirements('parse_ccs');
             $ccs = parse_ccs($data);
             $cc = $ccs[$cc_idx];
@@ -51,7 +51,7 @@
         if (!is_array($maxmind)) {
             $maxmind = myadmin_unstringify(stripslashes($data['maxmind']));
         }
-        $GLOBALS['tf']->add_html_head_js('
+        \MyAdmin\App::output()->addHeadJs('
 <style type="text/css">
 .isotope h4 {
 	margin-top: 0px;

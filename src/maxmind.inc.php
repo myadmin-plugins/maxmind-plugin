@@ -168,7 +168,7 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
     require_once __DIR__.'/../../../minfraud/http/src/CreditCardFraudDetection.php';
     $module = get_module_name('default');
     $db = get_module_db($module);
-    $data = $GLOBALS['tf']->accounts->read($custid);
+    $data = \MyAdmin\App::accounts()->read($custid);
     function_requirements('parse_ccs');
     $ccs = parse_ccs($data);
     $ccData = $ccIdx !== false ? $ccs[$ccIdx] : $data;
@@ -190,7 +190,7 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         'emailMD5' => md5($data['account_lid']),                                    // CreditCardFraudDetection.php will take
         'usernameMD5' => md5($data['account_lid']),                                 // MD5 hash of e-mail address passed to emailMD5 if it detects '@' in the string
         'passwordMD5' => $md5_passwd,
-        'sessionID' => $GLOBALS['tf']->session->sessionid,                          // Session ID
+        'sessionID' => \MyAdmin\App::session()->sessionid,                          // Session ID
         'i' => $ip === false ? \MyAdmin\Session::get_client_ip() : $ip,
         'forwardedIP' => $ip === false ? \MyAdmin\Session::get_client_ip() : $ip,   // X-Forwarded-For or Client-IP HTTP Header
         'domain' => mb_substr($data['account_lid'], mb_strpos($data['account_lid'], '@') + 1),
@@ -208,11 +208,11 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
         $new_data['disable_cc'] = 1;
         $new_data['payment_method'] = 'paypal';
-        $GLOBALS['tf']->accounts->update($custid, $new_data);
+        \MyAdmin\App::accounts()->update($custid, $new_data);
         return false;
     }
-    if (isset($ccData['cc']) && $GLOBALS['tf']->decrypt($ccData['cc']) != '') {
-        $request['bin'] = mb_substr($GLOBALS['tf']->decrypt($ccData['cc']), 0, 6); // bank identification number
+    if (isset($ccData['cc']) && \MyAdmin\App::decrypt($ccData['cc']) != '') {
+        $request['bin'] = mb_substr(\MyAdmin\App::decrypt($ccData['cc']), 0, 6); // bank identification number
     }
     myadmin_log('maxmind', 'info', "update_maxmind({$custid}, {$ip}) Called with ".json_encode($request), __LINE__, __FILE__);
     if (class_exists(\StatisticClient::class, false)) {
@@ -282,7 +282,7 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
     }
     $smarty = new TFSmarty();
     $smarty->assign('account_id', $custid);
-    $smarty->assign('account_lid', $GLOBALS['tf']->accounts->cross_reference($custid));
+    $smarty->assign('account_lid', \MyAdmin\App::accounts()->cross_reference($custid));
     $smarty->assign('fraudArray', $response);
     $email = $smarty->fetch('email/admin/fraud.tpl');
     if ($ccIdx !== false) {
@@ -332,7 +332,7 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         myadmin_log('maxmind', 'warning', $subject, __LINE__, __FILE__);
         (new \MyAdmin\Mail())->adminMail($subject, $subject, false, 'admin/maxmind_queries.tpl');
     }
-    $GLOBALS['tf']->accounts->update($custid, $new_data);
+    \MyAdmin\App::accounts()->update($custid, $new_data);
     return true;
 }
 
@@ -380,8 +380,8 @@ function update_maxmind_noaccount($data)
         } // set the billing country
         // Recommended fields
         $request['domain'] = mb_substr($data['lid'], mb_strpos($data['lid'], '@') + 1);
-        if (isset($data['cc']) && $GLOBALS['tf']->decrypt($data['cc']) != '') {
-            $request['bin'] = mb_substr($GLOBALS['tf']->decrypt($data['cc']), 0, 6);
+        if (isset($data['cc']) && \MyAdmin\App::decrypt($data['cc']) != '') {
+            $request['bin'] = mb_substr(\MyAdmin\App::decrypt($data['cc']), 0, 6);
         } // bank identification number
         if ($ip !== false) {
             $request['forwardedIP'] = $ip;

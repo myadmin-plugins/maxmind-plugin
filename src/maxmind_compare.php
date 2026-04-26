@@ -11,7 +11,7 @@
     function maxmind_compare()
     {
         function_requirements('has_acl');
-        if ($GLOBALS['tf']->ima != 'admin' || !has_acl('view_customer')) {
+        if (\MyAdmin\App::ima() != 'admin' || !has_acl('view_customer')) {
             dialog('Not admin', 'Not Admin or you lack the permissions to view this page.');
             return false;
         }
@@ -19,7 +19,7 @@
         $title = 'Compare MaxMind score vs riskScore in last ' . $limit . ' Accounts';
         page_title($title);
         add_output('<h3>'.$title.'</h3>');
-        $db = $GLOBALS['tf']->db;
+        $db = \MyAdmin\App::db();
         $db->query("select account_id, account_lid, account_status, account_value from accounts left join accounts_ext using (account_id) where account_key='maxmind' order by account_id desc limit {$limit}", __LINE__, __FILE__);
         while ($db->next_record(MYSQL_ASSOC)) {
             $maxmind = @myadmin_unstringify($db->Record['account_value']);

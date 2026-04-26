@@ -17,8 +17,8 @@
     global $console;
     function_requirements('maxmind_decode');
 
-    $db = clone $GLOBALS['tf']->db;
-    $db2 = clone $GLOBALS['tf']->db;
+    $db = clone \MyAdmin\App::db();
+    $db2 = clone \MyAdmin\App::db();
     $continue = true;
     $offset = 0;
     $limit = 10000;

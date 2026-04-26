@@ -41,7 +41,7 @@ class Plugin
     public static function getMenu(GenericEvent $event)
     {
         $menu = $event->getSubject();
-        if ($GLOBALS['tf']->ima == 'admin') {
+        if (\MyAdmin\App::ima() == 'admin') {
             function_requirements('has_acl');
             if (has_acl('client_billing')) {
                 $menu->add_link('billing', 'choice=none.maxmind_compare', '/images/myadmin/exchange.png', _('MaxMind Compare score/riskScore'));
