@@ -1,6 +1,6 @@
 ---
 name: myadmin-plugin-hooks
-description: Registers new event hooks or modifies existing ones in `src/Plugin.php` using Symfony EventDispatcher GenericEvent. Handles getHooks(), getSettings(), getRequirements(), getMenu(). Use when user says 'add hook', 'register event', 'add setting', 'add menu item', 'add requirement', 'add page requirement'. Do NOT use for non-plugin PHP files, procedural code in public_html/, or API classes in include/Api/. NOTE: for a plugin's contract/behavioral tests (tests/ContractTest.php, the shared harness, composer myadmin:scaffold-tests) use the plugin-contract-tests skill instead — this skill's reflection-only guidance predates that harness.
+description: Registers new event hooks or modifies existing ones in `src/Plugin.php` using Symfony EventDispatcher GenericEvent. Handles getHooks(), getSettings(), getRequirements(), getMenu(). Use when user says 'add hook', 'register event', 'add setting', 'add menu item', 'add requirement', 'add page requirement'. Do NOT use for non-plugin PHP files, procedural code in public_html/, or API classes in include/Api/. For a plugin's contract or behavioral tests (tests/ContractTest.php, the shared harness, composer myadmin:scaffold-tests) use the plugin-contract-tests skill instead — this skill's reflection-only guidance predates that harness.
 ---
 <!-- myadmin-contract-harness-notice -->
 > ### ⚠️ Read this before the rest of the file

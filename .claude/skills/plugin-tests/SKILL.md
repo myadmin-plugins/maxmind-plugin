@@ -1,6 +1,6 @@
 ---
 name: plugin-tests
-description: Creates or updates PHPUnit 9 tests in `tests/` following existing patterns — `TestCase` subclass, `declare(strict_types=1)`, namespace `Detain\MyAdminMaxMind\Tests`. Bootstrap stubs in `tests/bootstrap.php` and `tests/helpers/`. Use when user says 'add test', 'write tests', 'test coverage', 'create unit test', 'increase coverage'. Do NOT use for production code changes, CI config, or non-test PHP files. NOTE: for a plugin's contract/behavioral tests (tests/ContractTest.php, the shared harness, composer myadmin:scaffold-tests) use the plugin-contract-tests skill instead — this skill's reflection-only guidance predates that harness.
+description: Creates or updates PHPUnit 9 tests in `tests/` following existing patterns — `TestCase` subclass, `declare(strict_types=1)`, namespace `Detain\MyAdminMaxMind\Tests`. Bootstrap stubs in `tests/bootstrap.php` and `tests/helpers/`. Use when user says 'add test', 'write tests', 'test coverage', 'create unit test', 'increase coverage'. Do NOT use for production code changes, CI config, or non-test PHP files. For a plugin's contract or behavioral tests (tests/ContractTest.php, the shared harness, composer myadmin:scaffold-tests) use the plugin-contract-tests skill instead — this skill's reflection-only guidance predates that harness.
 ---
 <!-- myadmin-contract-harness-notice -->
 > ### ⚠️ Read this before the rest of the file
