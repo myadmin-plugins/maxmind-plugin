@@ -197,15 +197,17 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         'license_key' => MAXMIND_LICENSE_KEY,
         'country' => 'US',
     ];
+    $blankFields = [];
     foreach ($fields as $myField => $reqField) {
         if (isset($ccData[$myField]) && trim($ccData[$myField]) != '') {
             $request[$reqField] = $ccData[$myField];
         } elseif (in_array($myField, $requiredFields)) {
             $good = false;
+            $blankFields[] = $myField;
         }
     }
     if ($good === false) {
-        myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
+        myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) Blank Required Fields (".implode(', ', $blankFields).") - Disabling CC", __LINE__, __FILE__);
         $new_data['disable_cc'] = 1;
         $new_data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_ADDRESS;
         $new_data['payment_method'] = 'paypal';
@@ -304,11 +306,10 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
     // A very high fraud score used to call disable_account(), which locked the account
     // and cancelled every active service. A bad card is a reason to stop that customer
     // paying by card, not to take their account away, so we only turn off credit card
-    // use and leave PayPal/crypto/prepay working. The 'fraud' disable_cc_reason is what
-    // keeps add_cc() from quietly clearing disable_cc when the next card looks fine (see
-    // can_use_cc() in the authorizenet payments plugin, and MyAdmin\Billing\CcDisabled).
-    // This branch runs before the two weaker ones below, and they only fill the reason in
-    // when it is still unset, so the strongest cause is the one that sticks.
+    // use and leave PayPal/crypto/prepay working. disable_cc_reason records the cause for
+    // the admin customer page and the client notice; nothing gates on it. This branch runs
+    // before the two weaker ones below, and they only fill the reason in when it is still
+    // unset, so the strongest cause is the one reported.
     if ((MAXMIND_CARDER_LOCK == true && isset($response['carderEmail']) && $response['carderEmail'] == 'Yes') || (isset($response['score']) && $response['score'] >= MAXMIND_SCORE_LOCK) || $response['riskScore'] >= MAXMIND_RISKSCORE_LOCK) {
         $db->query("select * from invoices where invoices_type=1 and invoices_paid=1 and invoices_custid={$custid} and invoices_date <= date_sub(now(), INTERVAL 1 DAY) limit 1", __LINE__, __FILE__);
         if ($db->num_rows() == 0) {

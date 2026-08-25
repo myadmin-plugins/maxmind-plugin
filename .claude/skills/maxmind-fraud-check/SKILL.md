@@ -61,7 +61,7 @@ Penalties and rules follow a specific order in `src/maxmind.inc.php`. Place new 
 1. **Country penalties** (after API response, ~line 237): adjust `score`/`riskScore` based on billing country
 2. **Name-based penalties** (after country, ~line 245): check against `$female_names` array from `src/female_names.inc.php`
 3. **Distance penalty** (~line 272): adjust `riskScore` based on IP-to-billing distance
-4. **High-risk check** (~line 303): disable CC use (sticky) if scores exceed the lock thresholds. This used to call `disable_account()`, which locked the account and cancelled every service; it now only turns off credit cards so the customer keeps PayPal/crypto/prepay
+4. **High-risk check** (~line 303): disable CC use if scores exceed the lock thresholds. This used to call `disable_account()`, which locked the account and cancelled every service; it now only turns off credit cards so the customer keeps PayPal/crypto/prepay
 5. **CC disable check** (~line 313): disable CC if scores exceed CC thresholds
 6. **No-response check** (~line 318): disable CC if MaxMind returned blank scores
 7. **Fraud email alert** (~line 325): email admin if scores exceed alert thresholds
@@ -85,7 +85,7 @@ Pattern for a new CC-disabling rule:
 if ($response['someField'] >= MAXMIND_YOUR_THRESHOLD) {
     myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) Your reason message", __LINE__, __FILE__);
     $new_data['disable_cc'] = 1;
-    if (!isset($new_data['disable_cc_reason'])) {   // never downgrade a sticky 'fraud'
+    if (!isset($new_data['disable_cc_reason'])) {   // never downgrade a stronger cause
         $new_data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_SCORE;
     }
     $new_data['payment_method'] = 'paypal';
@@ -94,9 +94,9 @@ if ($response['someField'] >= MAXMIND_YOUR_THRESHOLD) {
 
 Pattern for a new high-risk rule (must check old invoices first). Do NOT call
 `disable_account()` here — a bad card is a reason to stop card payments, not to take the
-account away. The `fraud` `disable_cc_reason` is the sticky value that keeps `add_cc()` from clearing
-`disable_cc` when the next card looks fine (checked in `can_use_cc()` in the authorizenet
-payments plugin, and by `MyAdmin\Billing\CcDisabled` for the client-facing notice):
+account away. `disable_cc_reason` records the cause for the admin customer page and the
+client-facing notice (`MyAdmin\Billing\CcDisabled`); nothing gates on it, so this disable
+clears itself the same way every other one does:
 ```php
 if ($your_high_risk_condition) {
     $db->query("select * from invoices where invoices_type=1 and invoices_paid=1 and invoices_custid={$custid} and invoices_date <= date_sub(now(), INTERVAL 1 DAY) limit 1", __LINE__, __FILE__);
@@ -112,7 +112,7 @@ if ($your_high_risk_condition) {
 }
 ```
 
-**Verify:** Every branch that modifies `$response['score']` or `$response['riskScore']` guards with `isset()` for `score`. Every CC disable sets both `disable_cc` and `payment_method`. Every action has a `myadmin_log()` call. Only an admin action (`enable_cc`, `authorize_cc`, the admin API equivalents, or order approval) clears the sticky `disable_cc_reason`.
+**Verify:** Every branch that modifies `$response['score']` or `$response['riskScore']` guards with `isset()` for `score`. Every CC disable sets both `disable_cc` and `payment_method`. Every action has a `myadmin_log()` call. Every path that clears `disable_cc` clears `disable_cc_reason` with it, so the recorded cause never outlives the disable.
 
 ### Step 4: Mirror the rule in `update_maxmind_noaccount()`
 
