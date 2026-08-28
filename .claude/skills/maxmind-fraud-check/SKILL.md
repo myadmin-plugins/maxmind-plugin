@@ -85,25 +85,20 @@ Pattern for a new CC-disabling rule:
 if ($response['someField'] >= MAXMIND_YOUR_THRESHOLD) {
     myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) Your reason message", __LINE__, __FILE__);
     $new_data['disable_cc'] = 1;
-    if (!isset($new_data['disable_cc_reason'])) {   // never downgrade a stronger cause
-        $new_data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_SCORE;
-    }
     $new_data['payment_method'] = 'paypal';
 }
 ```
 
 Pattern for a new high-risk rule (must check old invoices first). Do NOT call
 `disable_account()` here — a bad card is a reason to stop card payments, not to take the
-account away. `disable_cc_reason` records the cause for the admin customer page and the
-client-facing notice (`MyAdmin\Billing\CcDisabled`); nothing gates on it, so this disable
-clears itself the same way every other one does:
+account away. `disable_cc` is a soft flag: it clears itself when the customer adds a card
+that passes `can_use_cc()`, exactly like the other CC-disable rules below:
 ```php
 if ($your_high_risk_condition) {
     $db->query("select * from invoices where invoices_type=1 and invoices_paid=1 and invoices_custid={$custid} and invoices_date <= date_sub(now(), INTERVAL 1 DAY) limit 1", __LINE__, __FILE__);
     if ($db->num_rows() == 0) {
         myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) Reason, Disabling Credit Card Use", __LINE__, __FILE__);
         $new_data['disable_cc'] = 1;
-        $new_data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_FRAUD;
         $new_data['cc_auto'] = 0;
         $new_data['payment_method'] = 'paypal';
     } else {
@@ -112,7 +107,7 @@ if ($your_high_risk_condition) {
 }
 ```
 
-**Verify:** Every branch that modifies `$response['score']` or `$response['riskScore']` guards with `isset()` for `score`. Every CC disable sets both `disable_cc` and `payment_method`. Every action has a `myadmin_log()` call. Every path that clears `disable_cc` clears `disable_cc_reason` with it, so the recorded cause never outlives the disable.
+**Verify:** Every branch that modifies `$response['score']` or `$response['riskScore']` guards with `isset()` for `score`. Every CC disable sets both `disable_cc` and `payment_method`. Every action has a `myadmin_log()` call.
 
 ### Step 4: Mirror the rule in `update_maxmind_noaccount()`
 

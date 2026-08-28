@@ -197,19 +197,17 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         'license_key' => MAXMIND_LICENSE_KEY,
         'country' => 'US',
     ];
-    $blankFields = [];
     foreach ($fields as $myField => $reqField) {
         if (isset($ccData[$myField]) && trim($ccData[$myField]) != '') {
             $request[$reqField] = $ccData[$myField];
         } elseif (in_array($myField, $requiredFields)) {
             $good = false;
-            $blankFields[] = $myField;
         }
     }
     if ($good === false) {
-        myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) Blank Required Fields (".implode(', ', $blankFields).") - Disabling CC", __LINE__, __FILE__);
+        myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
         $new_data['disable_cc'] = 1;
-        $new_data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_ADDRESS;
+        $new_data['cc_auto'] = 0;
         $new_data['payment_method'] = 'paypal';
         \MyAdmin\App::accounts()->update($custid, $new_data);
         return false;
@@ -306,16 +304,12 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
     // A very high fraud score used to call disable_account(), which locked the account
     // and cancelled every active service. A bad card is a reason to stop that customer
     // paying by card, not to take their account away, so we only turn off credit card
-    // use and leave PayPal/crypto/prepay working. disable_cc_reason records the cause for
-    // the admin customer page and the client notice; nothing gates on it. This branch runs
-    // before the two weaker ones below, and they only fill the reason in when it is still
-    // unset, so the strongest cause is the one reported.
+    // use and leave PayPal/crypto/prepay working.
     if ((MAXMIND_CARDER_LOCK == true && isset($response['carderEmail']) && $response['carderEmail'] == 'Yes') || (isset($response['score']) && $response['score'] >= MAXMIND_SCORE_LOCK) || $response['riskScore'] >= MAXMIND_RISKSCORE_LOCK) {
         $db->query("select * from invoices where invoices_type=1 and invoices_paid=1 and invoices_custid={$custid} and invoices_date <= date_sub(now(), INTERVAL 1 DAY) limit 1", __LINE__, __FILE__);
         if ($db->num_rows() == 0) {
             myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) Carder Email Or High Score From Customer {$custid} (".(isset($response['score']) ? 'Score: '.$response['score'] : '')." RiskScore {$response['riskScore']}), Disabling Credit Card Use", __LINE__, __FILE__);
             $new_data['disable_cc'] = 1;
-            $new_data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_FRAUD;
             $new_data['cc_auto'] = 0;
             $new_data['payment_method'] = 'paypal';
         } else {
@@ -325,17 +319,13 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
     if ((isset($response['score']) && $response['score'] >= MAXMIND_SCORE_DISABLE_CC) || $response['riskScore'] >= MAXMIND_RISKSCORE_DISABLE_CC || $response['proxyScore'] >= MAXMIND_PROXYSCORE_DISABLE_CC) {
         myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) ".(isset($response['score']) ? 'Score: '.$response['score']. ' >' . MAXMIND_SCORE_DISABLE_CC : ''). "   {$response['riskScore']} >" . MAXMIND_POSSIBLE_FRAUD_RISKSCORE.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
         $new_data['disable_cc'] = 1;
-        if (!isset($new_data['disable_cc_reason'])) {
-            $new_data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_SCORE;
-        }
+        $new_data['cc_auto'] = 0;
         $new_data['payment_method'] = 'paypal';
     }
     if (MAXMIND_NORESPONSE_DISABLE_CC == true && (!isset($response['score']) || trim($response['score']) == '') && trim($response['riskScore']) == '') {
         myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) BLANK Maxmind Score and Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__);
         $new_data['disable_cc'] = 1;
-        if (!isset($new_data['disable_cc_reason'])) {
-            $new_data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_NORESPONSE;
-        }
+        $new_data['cc_auto'] = 0;
         $new_data['payment_method'] = 'paypal';
         $subject = TITLE.' MISSING MaxMind Data - Possible Fraud';
         (new \MyAdmin\Mail())->adminMail($subject, $email, false, 'admin/fraud.tpl');
@@ -379,7 +369,7 @@ function update_maxmind_noaccount($data)
     if ($good === false) {
         myadmin_log('maxmind', 'notice', "update_maxmind({$custid}, {$ip}) Blank Required Fields - Disabling CC", __LINE__, __FILE__);
         $data['disable_cc'] = 1;
-        $data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_ADDRESS;
+        $data['cc_auto'] = 0;
         $data['payment_method'] = 'paypal';
     } else {
         $ccfs = new CreditCardFraudDetection();
@@ -487,24 +477,19 @@ function update_maxmind_noaccount($data)
             // available.
             if ((MAXMIND_CARDER_LOCK == true && $response['carderEmail'] == 'Yes') || (isset($response['score']) && $response['score'] >= MAXMIND_SCORE_LOCK) || $response['riskScore'] >= MAXMIND_RISKSCORE_LOCK) {
                 $data['disable_cc'] = 1;
-                $data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_FRAUD;
                 $data['cc_auto'] = 0;
                 $data['payment_method'] = 'paypal';
             }
             if ((isset($response['score']) && $response['score'] >= MAXMIND_SCORE_DISABLE_CC) || $response['riskScore'] >= MAXMIND_RISKSCORE_DISABLE_CC || $response['proxyScore'] >= MAXMIND_PROXYSCORE_DISABLE_CC) {
                 myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) ".(isset($response['score']) ? "{$response['score']} >= " . MAXMIND_SCORE_DISABLE_CC : ''). " or  {$response['riskScore']} >= " . MAXMIND_RISKSCORE_DISABLE_CC.' Fraud Score, Disabling CC and Setting Payment Method To PayPal', __LINE__, __FILE__);
                 $data['disable_cc'] = 1;
-                if (!isset($data['disable_cc_reason'])) {
-                    $data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_SCORE;
-                }
+                $data['cc_auto'] = 0;
                 $data['payment_method'] = 'paypal';
             }
             if (MAXMIND_NORESPONSE_DISABLE_CC == true && (!isset($response['score']) && trim($response['score']) == '') && trim($response['riskScore']) == '') {
                 myadmin_log('maxmind', 'warning', "update_maxmind({$custid}, {$ip}) BLANK Maxmind Score and BLANK MaxMind Risk % Score, Disabling CC and Setting Payment Method To PayPal", __LINE__, __FILE__);
                 $data['disable_cc'] = 1;
-                if (!isset($data['disable_cc_reason'])) {
-                    $data['disable_cc_reason'] = \MyAdmin\Billing\CcDisabled::REASON_NORESPONSE;
-                }
+                $data['cc_auto'] = 0;
                 $data['payment_method'] = 'paypal';
             }
         }
