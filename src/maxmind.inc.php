@@ -355,7 +355,61 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         (new \MyAdmin\Mail())->adminMail($subject, $subject, false, 'admin/maxmind_queries.tpl');
     }
     \MyAdmin\App::accounts()->update($custid, $new_data);
+    maxmind_record_response($custid, $response);
     return true;
+}
+
+/**
+ * Stores one minFraud response in `maxmind_output`.
+ *
+ * The table has existed for years, is commented "MaxMind Response History", and nothing
+ * wrote it -- the response went into the account's `ccs` JSON blob instead, which is why
+ * its 88,881 rows are one per ACCOUNT rather than one per request. Reviving it is what
+ * lets `account_ccs.account_cc_maxmindid` point at something real, and it is what lets
+ * the fraud response stop living in a blob.
+ *
+ * Deliberately best-effort: a fraud lookup that succeeded must not be turned into a
+ * failure because the history write did not land. Anything that goes wrong is logged.
+ *
+ * @param int $custid
+ * @param array $response the decoded minFraud response
+ * @return bool whether a row was written
+ */
+function maxmind_record_response($custid, $response)
+{
+    if (!is_array($response)) {
+        return false;
+    }
+    try {
+        $db = \MyAdmin\App::db();
+        // Build the allowlist from the LIVE schema rather than a hand-maintained map:
+        // the table carries three columns the current API no longer documents
+        // (highriskusername, highriskpassword, plus our own account_id), and a map that
+        // drifts from the schema fails the INSERT rather than dropping a field.
+        static $columns = null;
+        if ($columns === null) {
+            $columns = [];
+            $db->query('SHOW COLUMNS FROM maxmind_output', __LINE__, __FILE__);
+            while ($db->next_record(MYSQLI_ASSOC)) {
+                $columns[] = $db->Record['Field'];
+            }
+        }
+        $row = \Detain\MyAdminMaxMind\MaxmindOutputRow::build((int)$custid, $response, $columns);
+        if ($row === null) {
+            myadmin_log('maxmind', 'warning', "maxmind_record_response({$custid}): response carries no maxmindID, nothing to key the row on", __LINE__, __FILE__);
+            return false;
+        }
+        $db->query(
+            make_insert_query('maxmind_output', $row, \Detain\MyAdminMaxMind\MaxmindOutputRow::onDuplicate($row)),
+            __LINE__,
+            __FILE__
+        );
+        return true;
+    } catch (\Throwable $e) {
+        // Best effort by design -- see the docblock.
+        myadmin_log('maxmind', 'error', "maxmind_record_response({$custid}) failed: ".$e->getMessage(), __LINE__, __FILE__);
+        return false;
+    }
 }
 
 /**
