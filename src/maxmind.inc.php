@@ -293,6 +293,20 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
         }
         $ccs[$ccIdx]['maxmind'] = $response;
         $new_data['ccs'] = json_encode($ccs);
+        // Mirror the score onto the card's account_ccs row. Without this,
+        // update_maxmind() stays a blind whole-blob writer: it is called from 20+
+        // sites and would leave the table's copy of the fraud score stale, which
+        // matters because can_use_cc() compares it against
+        // MAXMIND_RISKSCORE_DISABLE_CC on every card-usability check.
+        // Inert until CCMETA_WRITE_TABLE is flipped.
+        if (class_exists('\\MyAdmin\\Billing\\CcMeta')) {
+            \MyAdmin\Billing\CcMeta::setRiskScore(
+                $custid,
+                $ccs[$ccIdx],
+                trim($response['riskScore']),
+                isset($response['maxmindID']) ? trim($response['maxmindID']) : null
+            );
+        }
     } else {
         $new_data['maxmind_riskscore'] = trim($response['riskScore']);
         if (isset($response['score'])) {
