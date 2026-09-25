@@ -31,6 +31,8 @@
 
 use ForceUTF8\Encoding;
 
+require_once __DIR__.'/maxmind_log.inc.php';
+
 if (is_file(__DIR__.'/../../../workerman/statistics/Applications/Statistics/Clients/StatisticClient.php')) {
     require_once __DIR__.'/../../../workerman/statistics/Applications/Statistics/Clients/StatisticClient.php';
 }
@@ -182,14 +184,10 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
             return true;
         }
     }
-    $db->query("select account_passwd from accounts where account_id={$custid}", __LINE__, __FILE__);
-    $db->next_record(MYSQL_ASSOC);
-    $md5_passwd = $db->Record['account_passwd'];
     $request = [
         'requested_type' => 'premium',                                              // Which level (free, city, premium) of CCFD to use
         'emailMD5' => md5($data['account_lid']),                                    // CreditCardFraudDetection.php will take
         'usernameMD5' => md5($data['account_lid']),                                 // MD5 hash of e-mail address passed to emailMD5 if it detects '@' in the string
-        'passwordMD5' => $md5_passwd,
         'sessionID' => \MyAdmin\App::session()->sessionid,                          // Session ID
         'i' => $ip === false ? \MyAdmin\Session::get_client_ip() : $ip,
         'forwardedIP' => $ip === false ? \MyAdmin\Session::get_client_ip() : $ip,   // X-Forwarded-For or Client-IP HTTP Header
@@ -215,7 +213,7 @@ function update_maxmind($custid, $ip = false, $ccIdx = false)
     if (isset($ccData['cc']) && \MyAdmin\App::decrypt($ccData['cc']) != '') {
         $request['bin'] = mb_substr(\MyAdmin\App::decrypt($ccData['cc']), 0, 6); // bank identification number
     }
-    myadmin_log('maxmind', 'info', "update_maxmind({$custid}, {$ip}) Called with ".json_encode($request), __LINE__, __FILE__);
+    myadmin_log('maxmind', 'info', "update_maxmind({$custid}, {$ip}) Called with ".json_encode(maxmind_loggable_request($request)), __LINE__, __FILE__);
     if (class_exists(\StatisticClient::class, false)) {
         \StatisticClient::tick('MaxMind', 'MinFraudLookup');
     }
@@ -478,7 +476,7 @@ function update_maxmind_noaccount($data)
         //uncomment to turn on debugging
         // $ccfs->debug = 1;
         //next we pass the input hash to the server
-        myadmin_log('maxmind', 'debug', "update_maxmind({$custid}, {$ip}) Calling With Arguments: " . json_encode($request), __LINE__, __FILE__);
+        myadmin_log('maxmind', 'debug', "update_maxmind({$custid}, {$ip}) Calling With Arguments: " . json_encode(maxmind_loggable_request($request)), __LINE__, __FILE__);
         if (class_exists(\StatisticClient::class, false)) {
             \StatisticClient::tick('MaxMind', 'MinFraudLookup');
         }
